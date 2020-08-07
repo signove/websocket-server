@@ -1,0 +1,168 @@
+<html>
+  <head>
+    <script src="multiscreen.all.min.js"> </script>
+    <script>
+      var m = new MultiScreen();
+
+      function connectButton() {
+        var ws_url = document.getElementById('ws_url').value;
+        var session_key = document.getElementById('session_key').value;
+        var client_key = document.getElementById('client_key').value;
+        m.connect(ws_url, session_key, client_key)
+          .then(function(evt) {
+            console.log("Connected!");
+            console.log(evt);
+          })
+          .catch(function(evt) {
+            console.log("Not connected!");
+            console.log(evt);
+          });
+      }
+
+      function disconnectButton() {
+        m.disconnect()
+          .then(function(response) {
+            console.log("Disconnected");
+            console.log(JSON.stringify(response));
+          })
+          .catch(function(response) {
+            console.log("Not disconnected");
+            console.log(JSON.stringify(response));
+          })
+      }
+
+      document.addEventListener("multiscreen.message", function(e) {
+          var message_log = document.getElementById('message_log');
+          message_log.innerHTML += (e.detail.sender + " - " + e.detail.message + "\n");
+      });
+
+      document.addEventListener("multiscreen.config.message", function(e) {
+          var message_log = document.getElementById('message_config_log');
+          message_log.innerHTML += (e.detail.message + "\n");
+      });
+
+      function sendMessageButton() {
+        var message = document.getElementById('message').value;
+        var receiver = document.getElementById('receiver').value;
+        if(receiver == "") {
+          receiver = undefined;
+        }
+        m.send(message, receiver)
+          .then(function() {
+              console.log("Message sent!");
+          })
+          .catch(function(evt) {
+              alert(evt.message);
+          })
+      }
+
+      function sendConfigMessageButton() {
+        var message = document.getElementById('config-general-message').value;
+        if(message == "") {
+          message = document.getElementById('config-message').value;
+        }
+        console.log(message);
+        m.sendConfigMessage(message)
+          .then(function() {
+              console.log("Message sent!");
+          })
+          .catch(function(evt) {
+              alert(evt.message);
+          })
+      }
+
+      function setup() {
+        var ws_url_input = document.getElementById('ws_url');
+        ws_url_input.value = "ws://" + window.location.host + "/websocket"
+      }
+
+      function detectEnterKeyMessage(e) {
+        if (e.keyCode == 13) {
+            sendMessageButton();
+        }
+      }
+
+
+      function detectEnterKeyConfig(e) {
+        if (e.keyCode == 13) {
+            sendConfigMessageButton();
+        }
+      }
+
+      function updateOptions(val) {
+        var message = eval(val);
+        m.sendConfigMessage(message)
+          .then(function() {
+              console.log("Config message sent!");
+          })
+          .catch(function(evt) {
+              alert(evt.message);
+          })
+      }
+
+    </script>
+
+    <style>
+      input[type="text"] {
+        width: 400px;
+      }
+      textarea {
+        width: 100%;
+        height: 300px;
+      }
+
+      body {
+        display: flex;
+        flex-flow: column wrap;
+        align-content: space-around;
+        border: 1px solid black;
+      }
+
+      .view_box {
+        display: flex;
+        flex-flow: row wrap;
+        align-content: space-around;
+        border: 1px solid black;
+      }
+
+      .view_box > div {
+        border: 1px solid blue;
+        flex: 1;
+      }
+
+    </style>
+  </head>
+
+  <body onload="setup();">
+    <div class="config_box">
+      <input type="text" id="ws_url" value=""><label>WebSocket URL</label>
+      <br/><input type="text" id="session_key" value="s1"><label><button onclick="document.getElementById('session_key').value = Utils.uuid();">&lt; UUID</button> Session Key</label>
+      <br/><input type="text" id="client_key" value="c1"><label>Client Key</label>
+      <br/><button onclick="connectButton()">Connect</button>
+           <button onclick="disconnectButton()">Disconnect</button>
+    </div>
+    <div class="view_box">
+      <div>
+        <input type="text" id="message" onkeyup="detectEnterKeyMessage(event)" value=""><label>Message</label>
+        <input type="text" id="receiver" value=""><label>Receiver</label>
+        <br/><button onclick="sendMessageButton()">Send message</button>
+        <br/><textarea id="message_log"></textarea>
+      </div>
+      <div>
+        <div>
+          <input type="radio" checked="true" name="sender_cfg" value="MULTISCREEN.SENDER_ON" onchange="updateOptions(this.value)">Sender on<br/>
+          <input type="radio" name="sender_cfg" value="MULTISCREEN.SENDER_OFF" onchange="updateOptions(this.value)">Sender off<br/>
+          <input type="radio" checked="true" name="receiver_cfg" value="MULTISCREEN.RECEIVER_ON" onchange="updateOptions(this.value)">Receiver on<br/>
+          <input type="radio" name="receiver_cfg" value="MULTISCREEN.RECEIVER_OFF" onchange="updateOptions(this.value)">Receiver off<br/>
+        </div>
+        <br/>
+        <select id="config-message">
+          <option value="GET_OPTIONS">GET_OPTIONS</option>
+        </select><label>Config message</label>
+        <br/><input type="text" id="config-general-message">
+        <br/><button onclick="sendConfigMessageButton()">Send config</button>
+        <br/><textarea id="message_config_log"></textarea>
+      </div>
+    </div>
+  </body>
+</html>

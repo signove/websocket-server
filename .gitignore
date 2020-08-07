@@ -1,0 +1,4 @@
+rebar/rel/multiscreen_ws/*
+rebar/priv/multiscreen/doc/*
+rebar/_build/
+node_modules/*

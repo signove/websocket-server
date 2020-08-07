@@ -1,0 +1,142 @@
+<html>
+  <head>
+    <script src="multiscreen.all.min.js"> </script>
+    <script>
+      //var m = new MultiScreen();
+
+      var clients = [];
+
+      var sendInterval = 0;
+
+      var number_of_clients = 1;
+
+      var send_frequency = 100;
+
+      function connectButton() {
+        var ws_url = "ws://" + window.location.host + "/websocket";
+        var session_key = "load_test_session";
+        number_of_clients = document.getElementById("number_of_clients").value;
+        send_frequency = document.getElementById("send_frequency").value;
+        for(var i = 0; i < number_of_clients; i++) {
+          var m = new MultiScreen();
+          var client_key = "c:" + i;
+          m.connect(ws_url, session_key, client_key)
+            .then(function(evt) {
+              console.log("Connected!");
+              console.log(evt);
+            })
+            .catch(function(evt) {
+              console.log("Not connected!");
+              console.log(evt);
+            });
+          clients.push(m);
+        }
+
+        sendInterval = setInterval(function() {
+          var now = performance.now();
+          var message = now;
+          for(var i = 0; i < number_of_clients; i++) {
+            var m = clients[i];
+            m.send(message)
+              .then(function() {
+                  console.log("Message sent!");
+              })
+              .catch(function(evt) {
+                  console.error(evt);
+              })
+          }
+        }, send_frequency);
+
+      }
+
+      function disconnectButton() {
+        for(var i = 0; i < number_of_clients; i++) {
+          var m = clients[i];
+
+          m.disconnect()
+            .then(function(response) {
+              console.log("Disconnected");
+              console.log(JSON.stringify(response));
+            })
+            .catch(function(response) {
+              console.log("Not disconnected");
+              console.log(JSON.stringify(response));
+            })
+        }
+        clients = [];
+        clearInterval(sendInterval);
+      }
+
+      document.addEventListener("multiscreen.message", function(e) {
+          var message_log = document.getElementById('message_log');
+          var now = performance.now();
+          message_log.innerHTML = (e.detail.sender + " - " + (now - e.detail.message) + "\n" + message_log.innerHTML);
+      });
+
+      document.addEventListener("multiscreen.config.message", function(e) {
+          var message_log = document.getElementById('message_config_log');
+          message_log.innerHTML += (e.detail.message + "\n");
+      });
+
+      function setup() {
+        document.getElementById("number_of_clients").onchange = function() {
+          document.getElementById("number_of_clients_label").innerHTML = document.getElementById("number_of_clients").value;
+        };
+        document.getElementById("send_frequency").onchange = function() {
+          document.getElementById("send_frequency_label").innerHTML = document.getElementById("send_frequency").value;
+        };
+        document.getElementById("number_of_clients").onchange();
+        document.getElementById("send_frequency").onchange();
+
+      }
+
+    </script>
+
+    <style>
+      input {
+        width: 400px;
+      }
+      textarea {
+        width: 100%;
+        height: 300px;
+      }
+
+      body {
+        display: flex;
+        flex-flow: column wrap;
+        align-content: space-around;
+        border: 1px solid black;
+      }
+
+      .view_box {
+        display: flex;
+        flex-flow: row wrap;
+        align-content: space-around;
+        border: 1px solid black;
+      }
+
+      .view_box > div {
+        border: 1px solid blue;
+        flex: 1;
+      }
+
+    </style>
+  </head>
+
+  <body onload="setup();">
+    <div class="config_box">
+      <input type="range" id="number_of_clients" min="1" max="100"><span id="number_of_clients_label"></span> clientes criados
+      <br/><input type="range" id="send_frequency" min="100" max="1000"><span id="send_frequency_label"></span> milisegundos entre chamadas
+      <br/><button onclick="connectButton()">Come&ccedil;ar</button>
+           <button onclick="disconnectButton()">Parar</button>
+    </div>
+    <div class="view_box">
+      <div>
+        <br/><textarea id="message_log"></textarea>
+      </div>
+      <div>
+        <br/><textarea id="message_config_log"></textarea>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,94 @@
+<html>
+<head>
+  <script src="multiscreen.all.min.js"> </script>
+  <script>
+  var m = new MultiScreen();
+
+    function setup() {
+      var ws_url_input = document.getElementById('ws_url');
+      ws_url_input.value = "ws://" + window.location.host + "/websocket"
+    }
+
+
+    function connectButton() {
+      var ws_url = document.getElementById('ws_url').value;
+      var session_key = document.getElementById('session_key').value;
+      var client_key = document.getElementById('client_key').value;
+      m.connect(ws_url, session_key, client_key)
+        .then(function(evt) {
+          console.log("Connected!");
+          console.log(evt);
+            m.sendConfigMessage(MULTISCREEN.RECEIVER_OFF)
+              .then(function() {
+                  console.log("RECEIVER_OFF message sent!");
+              })
+              .catch(function(evt) {
+                  alert(evt.message);
+              })
+        })
+        .catch(function(evt) {
+          console.log("Not connected!");
+          console.log(evt);
+        });
+    }
+
+    function disconnectButton() {
+      m.disconnect()
+        .then(function(response) {
+          console.log("Disconnected");
+          console.log(JSON.stringify(response));
+        })
+        .catch(function(response) {
+          console.log("Not disconnected");
+          console.log(JSON.stringify(response));
+        })
+    }
+
+    document.addEventListener("multiscreen.message", function(e) {
+        console.log(e.detail.message);
+    });
+
+    document.addEventListener("multiscreen.config.message", function(e) {
+        console.log(e.detail.message);
+    });
+
+    function detectEnterKeyMessage(e) {
+      if (e.keyCode == 13) {
+          sendMessageButton();
+      }
+    }
+
+    function sendMessageButton() {
+      var message = document.getElementById('message').value;
+      m.send(message)
+        .then(function() {
+            console.log("Message sent!");
+        })
+        .catch(function(evt) {
+            alert(evt.message);
+        })
+    }
+
+
+  </script>
+  <style>
+  </style>
+</head>
+<body>
+  <body onload="setup();">
+    <div class="config_box">
+      <input type="text" id="ws_url" value=""><label>WebSocket URL</label>
+      <br/><input type="text" id="session_key" value="exec_javascript_code" readonly="readonly"><label>Session Key</label>
+      <br/><input type="text" id="client_key" value="c1"><label>Client Key</label>
+      <br/><button onclick="connectButton()">Connect</button>
+           <button onclick="disconnectButton()">Disconnect</button>
+    </div>
+    <div class="view_box">
+      <div>
+        <input type="text" id="message" onkeyup="detectEnterKeyMessage(event)" value=""><label>Message</label>
+        <br/><button onclick="sendMessageButton()">Send message</button>
+      </div>
+    </div>
+  </body>
+</body>
+</html>
