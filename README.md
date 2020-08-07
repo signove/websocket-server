@@ -1,4 +1,4 @@
-# MultiScreen Erlang Project #
+# WebSocket Erlang Project #
 
 Erlang Websocket project to enable real time communication.
 
