@@ -12,7 +12,7 @@
     "gulp-shell": "^0.4.2",
     "gulp-uglify": "^1.2.0",
     "gulp-util": "3.0.6",
-    "jsdoc": "git+https://github.com/jsdoc3/jsdoc.git",
+    "jsdoc": "3.6.5",
     "orchestrator": "0.3.7",
     "vinyl-fs": "1.0.0"
   }
