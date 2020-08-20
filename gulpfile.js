@@ -3,13 +3,15 @@ var babel = require('gulp-babel');
 var shell = require('gulp-shell');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
+var runSequence = require('run-sequence');
 
 gulp.task('default', ['help'], function() {
 
 });
 
-gulp.task('run', 'Stop the Erlang project, build it and start it again', ['erlang:stop', 'js:build', 'erlang:build', 'erlang:start'], function() {
 
+gulp.task('run', 'Stop the Erlang project, build it and start it again', function(cb) {
+  runSequence('erlang:stop', 'js:build', 'erlang:build', 'erlang:start', cb);
 });
 
 gulp.task('js:copy_html', function() {

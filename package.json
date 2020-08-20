@@ -14,6 +14,7 @@
     "gulp-util": "3.0.6",
     "jsdoc": "3.6.5",
     "orchestrator": "0.3.7",
+    "run-sequence": "^2.2.1",
     "vinyl-fs": "1.0.0"
   }
 }
