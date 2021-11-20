@@ -22,7 +22,7 @@ Erlang Websocket project to enable real time communication.
 ** I recommend you to use the Erlang Version Manager (https://github.com/robisonsantos/evm). Install these needed dependencies before install Erlang: `apt install libncurses5-dev autoconf gcc make`
 ** Optionally you can install the following packages for Erlang:
 *** OpenSSL `apt install libssl-dev`
-* Install Rebar 3 (http://www.rebar3.org). Use version 3.14.3 at minimum.
+* Install Rebar 3 (http://www.rebar3.org). Use version 3.14.3 at minimum. (There is a copy of this rebar3 version at root project folder)
 * Install Erlang/Rebar dependencies `gulp erlang:deps`
 * Compile and execute the project `gulp run`
 * See available tasks `gulp`
@@ -31,7 +31,7 @@ Erlang Websocket project to enable real time communication.
 
 To deploy a production version of the code in a server, follow the below steps:
 
-* Execute the command `rebar3 as prod tar` inside the `rebar` folder of the project source code
+* Execute the command `../rebar3 as prod tar` inside the `rebar` folder of the project source code
 * Create a folder `multiscreen` folder in the `/opt/` folder of the computer to deploy
 * Copy the generated .tar.gz file to the `/opt/multiscreen` folder and extract it
 * Create a file `erlang-websocket-server.service` in the folder `/etc/systemd/system` folder with the following content:
