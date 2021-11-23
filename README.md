@@ -57,6 +57,13 @@ WantedBy=multi-user.target
 ** `sudo systemctl start erlang-websocket-server.service`
 ** `sudo systemctl enable erlang-websocket-server.service`
 
+### Deploy as Docker container ###
+
+To deploy the code as a docker container, follow the below steps:
+
+* Execute the command `docker build . -t websocket-server:latest`
+* Then execute the command `docker run -d -p 8080:8080 websocket-server:latest`
+
 
 ### Usage ###
 
