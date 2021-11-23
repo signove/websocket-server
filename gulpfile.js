@@ -14,6 +14,10 @@ gulp.task('run', 'Stop the Erlang project, build it and start it again', functio
   runSequence('erlang:stop', 'js:build', 'erlang:build', 'erlang:start', cb);
 });
 
+gulp.task('build', 'Stop the Erlang project and build it again', function(cb) {
+  runSequence('erlang:stop', 'js:build', 'erlang:build', cb);
+});
+
 gulp.task('js:copy_html', function() {
 	return gulp.src('html_samples/*.html')
 		.pipe(gulp.dest('rebar/priv/multiscreen/'));
