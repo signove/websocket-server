@@ -6,8 +6,8 @@
 
 % API
 -export([register/4, unregister/3]).
--export([broadcast_rt_message/3, direct_rt_message/4, broadcast_config_message/2, set_secret_config_key/3]).
--export([handle_config_message/3, handle_broadcast_rt_message/3, handle_broadcast_config_message/3]).
+-export([broadcast_config_message/2, set_secret_config_key/3]).
+-export([handle_config_message/3, handle_rt_message/3, handle_broadcast_rt_message/3, handle_broadcast_config_message/3]).
 
 init(_Args) ->
     % Two tables, one for RT communication and other to Configuration
@@ -17,25 +17,22 @@ init(_Args) ->
     {ok, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } }.
 
 register(ServerSessionPid, ClientKey, ClientPid, SessionType) ->
-    gen_server:call(ServerSessionPid, { register, SessionType, ClientPid, ClientKey, ServerSessionPid }).
+  gen_server:call(ServerSessionPid, { register, SessionType, ClientPid, ClientKey, ServerSessionPid }).
 
 unregister(ServerSessionPid, ClientKey, ClientPid) ->
-    gen_server:call(ServerSessionPid, { unregister, ClientPid, ClientKey, ServerSessionPid }).
-
-broadcast_rt_message(ServerSessionPid, ClientKey, Message) ->
-    gen_server:call(ServerSessionPid, { broadcast_rt_message, ClientKey, Message }).
-
-direct_rt_message(ServerSessionPid, ClientKey, ReceiverKey, Message) ->
-    gen_server:call(ServerSessionPid, { direct_rt_message, ClientKey, ReceiverKey, Message }).
+  gen_server:call(ServerSessionPid, { unregister, ClientPid, ClientKey, ServerSessionPid }).
 
 set_secret_config_key(ServerSessionPid, ClientKey, SecretKey) ->
-    gen_server:call(ServerSessionPid, { set_secret_config_key , ClientKey, SecretKey}).
+  gen_server:call(ServerSessionPid, { set_secret_config_key , ClientKey, SecretKey}).
 
 broadcast_config_message(ServerSessionPid, Message) ->
-    gen_server:call(ServerSessionPid, { broadcast_config_message , Message }).
+  gen_server:call(ServerSessionPid, { broadcast_config_message , Message }).
 
 handle_config_message(ServerSessionPid, ClientKey, Message) ->
-    gen_server:call(ServerSessionPid, { handle_config_message , ServerSessionPid, ClientKey, Message }).
+  gen_server:call(ServerSessionPid, { handle_config_message , ServerSessionPid, ClientKey, Message }).
+
+handle_rt_message(ServerSessionPid, ClientKey, Message) ->
+  gen_server:call(ServerSessionPid, {handle_rt_message, ServerSessionPid, ClientKey, Message}).
 
 handle_call({ register, rt_session, ClientRTPid, ClientKey, ServerSessionPid }, _From, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable }) ->
     HasClientKey = ets:member(ClientRTTable, ClientKey),
@@ -84,34 +81,40 @@ handle_call({ unregister, ClientRTPid, ClientKey, ServerSessionPid }, _From, { C
         _ ->
             {reply, ok, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } }
     end;
-handle_call({ broadcast_rt_message, ClientKey , Data }, _From, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable }) ->
-    ClientOptions = ets:lookup_element(ClientRTTable, ClientKey, 3),
-    CanSend = lists:member(sender_on , ClientOptions),
-    if
-      CanSend ->
-        NewData = <<ClientKey/binary, <<"#">>/binary , Data/binary>>,
-        handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), NewData);
-      true ->
-        io:format("send disabled for ~s ~n", [ClientKey])
-    end,
-    {reply, ok, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } };
-handle_call({ direct_rt_message, ClientKey, ReceiverKey, Data }, _From, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable }) ->
-    NewData = <<ClientKey/binary, <<"#">>/binary , Data/binary>>,
-    IsValidReceiver = ets:member(ClientRTTable, ReceiverKey),
-    if
-      IsValidReceiver ->
-        [{_, ReceiverClientPid, _}|_] = ets:lookup(ClientRTTable, ReceiverKey),
-        ReceiverClientPid ! {message, NewData};
-      true ->
-        io:format("invalid receiver ~s ~n", [ReceiverKey])
-    end,
-    {reply, ok, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } };
 handle_call({ set_secret_config_key, ClientKey, SecretKey }, _From, {ClientRTTable, ClientConfigTable, ClientConfigKeyTable}) ->
     ets:insert(ClientConfigKeyTable, { ClientKey, SecretKey }),
     {reply, ok, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } };
 handle_call({ broadcast_config_message , Message }, _From, {ClientRTTable, ClientConfigTable, ClientConfigKeyTable}) ->
     handle_broadcast_config_message(ClientConfigTable, ets:first(ClientConfigTable), Message),
     {reply, ok, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } };
+handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, Message}, _From, {ClientRTTable, ClientConfigTable, ClientConfigKeyTable}) ->
+    JsonMsg = jsone:decode(Message),
+    MsgData = maps:get(<<"data">>, JsonMsg),
+    MsgReceiver = maps:get(<<"receiver">>, JsonMsg),
+    io:format("RealTime message ~s received from ~s to ~s ~n", [binary_to_list(MsgData), binary_to_list(ClientKey), binary_to_list(MsgReceiver)]),
+    if
+      MsgReceiver ==  <<"all">>->
+        ClientOptions = ets:lookup_element(ClientRTTable, ClientKey, 3),
+        CanSend = lists:member(sender_on , ClientOptions),
+        if
+          CanSend ->
+            NewData = <<ClientKey/binary, <<"#">>/binary , MsgData/binary>>,
+            handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), NewData);
+          true ->
+            io:format("send disabled for ~s ~n", [ClientKey])
+        end;
+      true ->
+        NewData = <<ClientKey/binary, <<"#">>/binary , MsgData/binary>>,
+        IsValidReceiver = ets:member(ClientRTTable, MsgReceiver),
+        if
+          IsValidReceiver ->
+            [{_, ReceiverClientPid, _}|_] = ets:lookup(ClientRTTable, MsgReceiver),
+            ReceiverClientPid ! {message, NewData};
+          true ->
+            io:format("invalid receiver ~s ~n", [MsgReceiver])
+        end
+    end,
+    {reply, ok, {ClientRTTable, ClientConfigTable, ClientConfigKeyTable} };
 handle_call({ handle_config_message, _ServerSessionPid, ClientKey, Message }, _From, {ClientRTTable, ClientConfigTable, ClientConfigKeyTable}) ->
     io:format("Configuration message ~s received from ~s ~n", [Message, binary_to_list(ClientKey)]),
     ClientOptions = ets:lookup_element(ClientRTTable, ClientKey, 3),
