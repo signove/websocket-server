@@ -45,31 +45,24 @@ websocket_init(_TransportName, Req, _Opts) ->
 						end
     end.
 
-websocket_handle({text, Msg}, Req, {SessionServerPid, ClientKey}) ->
+websocket_handle({binary, Msg}, Req, {SessionServerPid, ClientKey}) ->
 		JsonMsg = jsone:decode(Msg),
 		MsgData = maps:get(<<"data">>, JsonMsg),
 		MsgReceiver = maps:get(<<"receiver">>, JsonMsg),
 		io:format("RealTime message ~s received from ~s to ~s ~n", [binary_to_list(MsgData), binary_to_list(ClientKey), binary_to_list(MsgReceiver)]),
 		if
 			MsgReceiver ==  <<"all">>->
-					server_session:broadcast_rt_message(SessionServerPid, ClientKey, MsgData);
+				server_session:broadcast_rt_message(SessionServerPid, ClientKey, MsgData);
 			true ->
-					server_session:direct_rt_message(SessionServerPid, ClientKey, MsgReceiver, MsgData)
+				server_session:direct_rt_message(SessionServerPid, ClientKey, MsgReceiver, MsgData)
 		end,
-    {ok, Req,  { SessionServerPid , ClientKey} };
-websocket_handle({binary, Msg}, Req, {SessionServerPid, ClientKey}) ->
-		JsonMsg = jsone:decode(Msg),
-		MsgData = maps:get(<<"data">>, JsonMsg),
-		MsgReceiver = maps:get(<<"receiver">>, JsonMsg),
-	  io:format("RealTime message ~s received from ~s to ~s ~n", [binary_to_list(MsgData), binary_to_list(ClientKey), binary_to_list(MsgReceiver)]),
-	  server_session:broadcast_rt_message(SessionServerPid, ClientKey, MsgData),
 		{ok, Req,  { SessionServerPid , ClientKey} }.
 
 websocket_info({postinit, SecretConfigKey}, Req, {SessionServerPid, ClientKey}) ->
 		server_session:broadcast_config_message(SessionServerPid, binary_to_list(ClientKey) ++ " IN"),
-		{reply, {text, SecretConfigKey}, Req,  { SessionServerPid , ClientKey} };
+		{reply, {binary, SecretConfigKey}, Req,  { SessionServerPid , ClientKey} };
 websocket_info({message, Msg}, Req, {SessionServerPid, ClientKey}) ->
-		{reply, {text, Msg}, Req,  { SessionServerPid , ClientKey} };
+		{reply, {binary, Msg}, Req,  { SessionServerPid , ClientKey} };
 websocket_info({stop}, Req, {SessionServerPid, ClientKey}) ->
 		{shutdown, Req,  { SessionServerPid , ClientKey} }.
 

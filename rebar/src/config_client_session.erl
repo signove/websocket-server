@@ -45,15 +45,12 @@ websocket_init(_TransportName, Req, _Opts) ->
 						end
     end.
 
-websocket_handle({text, Msg}, Req, {SessionServerPid, ClientKey}) ->
-	server_session:handle_config_message(SessionServerPid, ClientKey, Msg),
-    {ok, Req, { SessionServerPid , ClientKey} };
 websocket_handle({binary, Msg}, Req, {SessionServerPid, ClientKey}) ->
 	server_session:handle_config_message(SessionServerPid, ClientKey, Msg),
 	{ok, Req, { SessionServerPid , ClientKey} }.
 
 websocket_info({message, Msg}, Req, {SessionServerPid, ClientKey}) ->
-	{reply, {text, Msg}, Req,  { SessionServerPid , ClientKey} };
+	{reply, {binary, Msg}, Req,  { SessionServerPid , ClientKey} };
 websocket_info({stop}, Req, {SessionServerPid, ClientKey}) ->
 	{shutdown, Req,  { SessionServerPid , ClientKey} }.
 
