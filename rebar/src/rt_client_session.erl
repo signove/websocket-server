@@ -60,5 +60,5 @@ websocket_info({stop}, Req, {SessionServerPid, ClientKey}) ->
 
 websocket_terminate(Reason, _Req, {SessionServerPid, ClientKey}) ->
 	io:format("Websocket closed, reason [~p] \n", [Reason]),
-	server_session:unregister(SessionServerPid, ClientKey, self()),
-	server_session:broadcast_config_message(SessionServerPid, ClientKey, <<"OUT">>).
+	server_session:broadcast_config_message(SessionServerPid, ClientKey, <<"OUT">>),
+	server_session:unregister(SessionServerPid, ClientKey, self()).
