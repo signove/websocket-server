@@ -20,29 +20,29 @@ websocket_init(_TransportName, Req, _Opts) ->
         {SessionKey, _ } ->
             SessionServerPid = server_session_manager:get_session_pid(SessionKey),
             case cowboy_req:qs_val(list_to_binary("client"), Req) of
-								{ undefined, _ } ->
-									 {shutdown, Req};
-								{ClientKey, _ } ->
-									  ClientKeyHasSeparator = (string:chr(binary_to_list(ClientKey), $#) /= 0),
-										case cowboy_req:qs_val(list_to_binary("secret_config_key"), Req) of
-											{ undefined, _ } ->
-												{shutdown, Req};
-											{SecretKey, _} ->
-												if
-														ClientKeyHasSeparator ->
-																io:format("ClientKey cannot have '#'", []),
-																{shutdown, Req};
-														true ->
-															Registered = (server_session:register(SessionServerPid, ClientKey, self(), { config_session, SecretKey }) /= rt_session_unavailable),
-															if
-																	Registered ->
-																			{ok, Req, { SessionServerPid , ClientKey} };
-																	true ->
-									            			{shutdown, Req}
-															end
-												end
-										end
-						end
+				{ undefined, _ } ->
+					{shutdown, Req};
+				{ClientKey, _ } ->
+					ClientKeyHasSeparator = (string:chr(binary_to_list(ClientKey), $#) /= 0),
+					case cowboy_req:qs_val(list_to_binary("secret_config_key"), Req) of
+						{ undefined, _ } ->
+							{shutdown, Req};
+						{SecretKey, _} ->
+							if
+								ClientKeyHasSeparator ->
+										io:format("ClientKey cannot have '#'", []),
+										{shutdown, Req};
+								true ->
+									Registered = (server_session:register(SessionServerPid, ClientKey, self(), { config_session, SecretKey }) /= rt_session_unavailable),
+									if
+										Registered ->
+											{ok, Req, { SessionServerPid , ClientKey} };
+										true ->
+											{shutdown, Req}
+									end
+							end
+					end
+			end	
     end.
 
 websocket_handle({binary, Msg}, Req, {SessionServerPid, ClientKey}) ->

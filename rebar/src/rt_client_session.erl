@@ -50,13 +50,15 @@ websocket_handle({binary, Msg}, Req, {SessionServerPid, ClientKey}) ->
 	{ok, Req,  { SessionServerPid , ClientKey} }.
 
 websocket_info({postinit, SecretConfigKey}, Req, {SessionServerPid, ClientKey}) ->
-	server_session:broadcast_config_message(SessionServerPid, binary_to_list(ClientKey) ++ " IN"),
-	{reply, {binary, SecretConfigKey}, Req,  { SessionServerPid , ClientKey} };
+	server_session:broadcast_config_message(SessionServerPid, ClientKey, <<"IN">>),
+	Message = server_session:generate_message(ClientKey, list_to_binary(SecretConfigKey)),
+	{reply, {binary, Message}, Req,  { SessionServerPid , ClientKey} };
 websocket_info({message, Msg}, Req, {SessionServerPid, ClientKey}) ->
 	{reply, {binary, Msg}, Req,  { SessionServerPid , ClientKey} };
 websocket_info({stop}, Req, {SessionServerPid, ClientKey}) ->
 	{shutdown, Req,  { SessionServerPid , ClientKey} }.
 
-websocket_terminate(_Reason, _Req, {SessionServerPid, ClientKey}) ->
+websocket_terminate(Reason, _Req, {SessionServerPid, ClientKey}) ->
+	io:format("Websocket closed, reason [~p] \n", [Reason]),
 	server_session:unregister(SessionServerPid, ClientKey, self()),
-	server_session:broadcast_config_message(SessionServerPid, binary_to_list(ClientKey) ++ " OUT").
+	server_session:broadcast_config_message(SessionServerPid, ClientKey, <<"OUT">>).
