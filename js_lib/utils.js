@@ -79,7 +79,7 @@ class Utils {
         return { version, sender, payload };
     }
 
-    static createMultiscreenMessage(receiver, payload) {
+    static createMultiscreenMessage(payload, receiver = "") {
         const VERSION = 1;
         const VERSION_LENGTH = 2
         const RECEIVER_LENGTH = 20;

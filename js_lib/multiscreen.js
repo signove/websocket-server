@@ -150,9 +150,9 @@ class MultiScreen {
     *
     * @param message - The message as string.
     */
-    send(message, receiver = "all") {
+    send(message, receiver = "") {
         if(this.mWebSocketRTObject !== undefined) {
-            this.mWebSocketRTObject.send(Utils.createMultiscreenMessage(receiver, message));
+            this.mWebSocketRTObject.send(Utils.createMultiscreenMessage(message, receiver));
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketRTObject === undefined) {
@@ -175,7 +175,7 @@ class MultiScreen {
     */
     sendConfigMessage(message) {
         if(this.mWebSocketConfigObject !== undefined) {
-            this.mWebSocketConfigObject.send(Utils.createMultiscreenMessage("all", message));
+            this.mWebSocketConfigObject.send(Utils.createMultiscreenMessage(message));
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketConfigObject === undefined) {

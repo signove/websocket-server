@@ -94,7 +94,7 @@ handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, Version, Receiver
     Receiver = remove_right_zeros(ReceiverBin),
     io:format("Protocol version [~p] - RealTime message [~p], received from ~p and sending to ~p ~n", [Version, Payload, ClientKey, Receiver]),
     if
-      Receiver ==  <<"all">>->
+      Receiver ==  <<"">>->
         ClientOptions = ets:lookup_element(ClientRTTable, ClientKey, 3),
         CanSend = lists:member(sender_on , ClientOptions),
         if
