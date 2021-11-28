@@ -27,6 +27,14 @@ Erlang Websocket project to enable real time communication.
 * Compile and execute the project `gulp run`
 * See available tasks `gulp`
 
+### Protocol communication ###
+
+The protocol uses binary format to transfer data. It is as follows.
+
+version:2 bytes|client_key: 20 bytes|payload: rest bytes
+
+The methods (buffer = Utils.createMultiscreenMessage(receiver, payload)) and ({ version, sender, payload } = Utils.readMultiscreenMessage(buffer)) can be used to create a valid message.
+
 ### Deploy production version ###
 
 To deploy a production version of the code in a server, follow the below steps:

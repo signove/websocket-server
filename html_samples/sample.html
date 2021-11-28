@@ -33,12 +33,12 @@
 
       document.addEventListener("multiscreen.message", function(e) {
           var message_log = document.getElementById('message_log');
-          message_log.innerHTML += (e.detail.sender + " - " + e.detail.message + "\n");
+          message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
       });
 
       document.addEventListener("multiscreen.config.message", function(e) {
           var message_log = document.getElementById('message_config_log');
-          message_log.innerHTML += (e.detail.message + "\n");
+          message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
       });
 
       function sendMessageButton() {
@@ -47,7 +47,7 @@
         if(receiver == "") {
           receiver = undefined;
         }
-        m.send(message, receiver)
+        m.send(Utils.stringToArrayBuffer(message), receiver)
           .then(function() {
               console.log("Message sent!");
           })
@@ -62,7 +62,7 @@
           message = document.getElementById('config-message').value;
         }
         console.log(message);
-        m.sendConfigMessage(message)
+        m.sendConfigMessage(Utils.stringToArrayBuffer(message))
           .then(function() {
               console.log("Message sent!");
           })
@@ -91,7 +91,7 @@
 
       function updateOptions(val) {
         var message = eval(val);
-        m.sendConfigMessage(message)
+        m.sendConfigMessage(Utils.stringToArrayBuffer(message))
           .then(function() {
               console.log("Config message sent!");
           })

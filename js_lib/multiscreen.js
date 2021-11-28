@@ -54,7 +54,12 @@ class MultiScreen {
                 this.mClientKey = clientKey;
             };
             this.mWebSocketRTObject.onmessage = (evt) => {
-                this.secretConfigKey = evt.data;
+                if ( evt.data instanceof ArrayBuffer ) {
+                    var { version, sender, payload } = Utils.readMultiscreenMessage(evt.data);
+                    this.secretConfigKey = Utils.arrayBufferToString(payload);
+                } else {
+                    this.secretConfigKey = evt.data;
+                }
                 this.mWebSocketConfigObject = new WebSocket(webSocketURL + "/config?secret_config_key=" +encodeURIComponent(this.secretConfigKey)+ "&session=" + encodeURIComponent(this.mSessionKey) + "&client=" + encodeURIComponent(this.mClientKey));
                 this.mWebSocketConfigObject.binaryType = "arraybuffer";
 
@@ -72,13 +77,25 @@ class MultiScreen {
                 };
 
                 this.mWebSocketConfigObject.onmessage = (evt) => {
-                    document.dispatchEvent(new CustomEvent('multiscreen.config.message', { 'detail': { 'message' : evt.data }  }));
+                    var data = "";
+                    if ( evt.data instanceof ArrayBuffer ) {
+                        var { version, sender, payload } = Utils.readMultiscreenMessage(evt.data);
+                        data = payload;
+                    } else {
+                        data = evt.data;
+                    }
+                    document.dispatchEvent(new CustomEvent('multiscreen.config.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : data }  }));
                 };
 
                 this.mWebSocketRTObject.onmessage = (evt) => {
-                    var sender = evt.data.substring(0, evt.data.indexOf('#'));
-                    var message = evt.data.substr(evt.data.indexOf('#') + 1);
-                    document.dispatchEvent(new CustomEvent('multiscreen.message', { 'detail': { 'sender' : sender, 'message' : message }  }));
+                    var data = "";
+                    if ( evt.data instanceof ArrayBuffer ) {
+                        var { version, sender, payload } = Utils.readMultiscreenMessage(evt.data);
+                        data = payload;
+                    } else {
+                        data = evt.data;
+                    }
+                    document.dispatchEvent(new CustomEvent('multiscreen.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : payload }  }));
                 };
             };
             this.mWebSocketRTObject.onerror = (evt) => {
@@ -135,11 +152,7 @@ class MultiScreen {
     */
     send(message, receiver = "all") {
         if(this.mWebSocketRTObject !== undefined) {
-            var msgObject = {
-                data : message,
-                receiver : receiver
-            };
-            this.mWebSocketRTObject.send(JSON.stringify(msgObject));
+            this.mWebSocketRTObject.send(Utils.createMultiscreenMessage(receiver, message));
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketRTObject === undefined) {
@@ -162,7 +175,7 @@ class MultiScreen {
     */
     sendConfigMessage(message) {
         if(this.mWebSocketConfigObject !== undefined) {
-            this.mWebSocketConfigObject.send(message);
+            this.mWebSocketConfigObject.send(Utils.createMultiscreenMessage("all", message));
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketConfigObject === undefined) {
