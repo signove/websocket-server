@@ -16,13 +16,3 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build the Docker image
       run: docker build . --tag websocket-server:$(date +%s)
-
-  deploy:
-    uses: redhat-actions/oc-new-app@v1
-    with:
-      # Name to use for generated application artifacts
-      app_name: Websocket-Server
-    
-      image: websocket-server:$(date +%s)
-    
-      port: 8080
