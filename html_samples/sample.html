@@ -1,8 +1,8 @@
 <html>
   <head>
-    <script src="multiscreen.all.min.js"> </script>
+    <script src="microservicehub.all.min.js"> </script>
     <script>
-      var m = new MultiScreen();
+      var m = new MicroServiceHUB();
 
       function connectButton() {
         var ws_url = document.getElementById('ws_url').value;
@@ -31,12 +31,12 @@
           })
       }
 
-      document.addEventListener("multiscreen.message", function(e) {
+      document.addEventListener("microservicehub.message", function(e) {
           var message_log = document.getElementById('message_log');
           message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
       });
 
-      document.addEventListener("multiscreen.config.message", function(e) {
+      document.addEventListener("microservicehub.config.message", function(e) {
           var message_log = document.getElementById('message_config_log');
           message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
       });
@@ -149,12 +149,7 @@
         <br/><textarea id="message_log"></textarea>
       </div>
       <div>
-        <div>
-          <input type="radio" checked="true" name="sender_cfg" value="MULTISCREEN.SENDER_ON" onchange="updateOptions(this.value)">Sender on<br/>
-          <input type="radio" name="sender_cfg" value="MULTISCREEN.SENDER_OFF" onchange="updateOptions(this.value)">Sender off<br/>
-          <input type="radio" checked="true" name="receiver_cfg" value="MULTISCREEN.RECEIVER_ON" onchange="updateOptions(this.value)">Receiver on<br/>
-          <input type="radio" name="receiver_cfg" value="MULTISCREEN.RECEIVER_OFF" onchange="updateOptions(this.value)">Receiver off<br/>
-        </div>
+        <div></div>
         <br/>
         <select id="config-message">
           <option value="GET_OPTIONS">GET_OPTIONS</option>

@@ -33,15 +33,15 @@ The protocol uses binary format to transfer data. It is as follows.
 
 version:2 bytes|client_key: 20 bytes|payload: rest bytes
 
-The methods (buffer = Utils.createMultiscreenMessage(receiver, payload)) and ({ version, sender, payload } = Utils.readMultiscreenMessage(buffer)) can be used to create a valid message.
+The methods (buffer = Utils.createMicroServiceHUBMessage(receiver, payload)) and ({ version, sender, payload } = Utils.readMicroServiceHUBMessage(buffer)) can be used to create a valid message.
 
 ### Deploy production version ###
 
 To deploy a production version of the code in a server, follow the below steps:
 
 * Execute the command `../rebar3 as prod tar` inside the `rebar` folder of the project source code
-* Create a folder `multiscreen` folder in the `/opt/` folder of the computer to deploy
-* Copy the generated .tar.gz file to the `/opt/multiscreen` folder and extract it
+* Create a folder `microservicehub` folder in the `/opt/` folder of the computer to deploy
+* Copy the generated .tar.gz file to the `/opt/microservicehub` folder and extract it
 * Create a file `erlang-websocket-server.service` in the folder `/etc/systemd/system` folder with the following content:
 
 ```
@@ -51,10 +51,10 @@ Description=Erlang Websocket Server
 [Service]
 Type=simple
 RemainAfterExit=yes
-Environment=HOME=/opt/multiscreen
-WorkingDirectory=/opt/multiscreen
-ExecStart=/opt/multiscreen/bin/multiscreen_ws daemon
-ExecStop=/opt/multiscreen/bin/multiscreen_ws stop
+Environment=HOME=/opt/microservicehub
+WorkingDirectory=/opt/microservicehub
+ExecStart=/opt/microservicehub/bin/microservicehub daemon
+ExecStop=/opt/microservicehub/bin/microservicehub stop
 
 [Install]
 WantedBy=multi-user.target
@@ -75,4 +75,4 @@ To deploy the code as a docker container, follow the below steps:
 
 ### Usage ###
 
-* A sample is available at http://<YOUR_IP_ADDRESS>:8080/multiscreen/sample.html).
+* A sample is available at http://<YOUR_IP_ADDRESS>:8080/microservicehub/sample.html).

@@ -1,4 +1,4 @@
-rebar/rel/multiscreen_ws/*
-rebar/priv/multiscreen/doc/*
+rebar/rel/microservicehub/*
+rebar/priv/microservicehub/doc/*
 rebar/_build/
 node_modules/*

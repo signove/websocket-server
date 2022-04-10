@@ -1,4 +1,4 @@
-{application, multiscreen_ws,
+{application, microservicehub,
  [
   {description, ""},
   {vsn, "1"},
@@ -13,6 +13,6 @@
                   quickrand,
                   uuid
                  ]},
-  {mod, { multiscreen_ws_app, []}},
+  {mod, { microservicehub_app, []}},
   {env, []}
  ]}.

@@ -1,8 +1,8 @@
 <html>
 <head>
-  <script src="multiscreen.all.min.js"> </script>
+  <script src="microservicehub.all.min.js"> </script>
   <script>
-  var m = new MultiScreen();
+  var m = new MicroServiceHUB();
 
     function setup() {
       var ws_url_input = document.getElementById('ws_url');
@@ -18,13 +18,6 @@
         .then(function(evt) {
           console.log("Connected!");
           console.log(evt);
-            m.sendConfigMessage(MULTISCREEN.RECEIVER_OFF)
-              .then(function() {
-                  console.log("RECEIVER_OFF message sent!");
-              })
-              .catch(function(evt) {
-                  alert(evt.message);
-              })
         })
         .catch(function(evt) {
           console.log("Not connected!");
@@ -44,11 +37,11 @@
         })
     }
 
-    document.addEventListener("multiscreen.message", function(e) {
+    document.addEventListener("microservicehub.message", function(e) {
         console.log(e.detail.message);
     });
 
-    document.addEventListener("multiscreen.config.message", function(e) {
+    document.addEventListener("microservicehub.config.message", function(e) {
         console.log(e.detail.message);
     });
 

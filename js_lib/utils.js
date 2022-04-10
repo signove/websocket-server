@@ -60,7 +60,7 @@ class Utils {
         return buf;
     } 
 
-    static readMultiscreenMessage(buffer) {
+    static readMicroServiceHUBMessage(buffer) {
         const RECEIVER_LENGTH = 20;
         const RECEIVER_POS_OFFSET = 2;
         const PAYLOAD_POS_OFFSET = 22;
@@ -79,7 +79,7 @@ class Utils {
         return { version, sender, payload };
     }
 
-    static createMultiscreenMessage(payload, receiver = "") {
+    static createMicroServiceHUBMessage(payload, receiver = "") {
         const VERSION = 1;
         const VERSION_LENGTH = 2
         const RECEIVER_LENGTH = 20;

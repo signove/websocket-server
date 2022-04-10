@@ -20,21 +20,21 @@ gulp.task('build', 'Stop the Erlang project and build it again', function(cb) {
 
 gulp.task('js:copy_html', function() {
 	return gulp.src('html_samples/*.html')
-		.pipe(gulp.dest('rebar/priv/multiscreen/'));
+		.pipe(gulp.dest('rebar/priv/microservicehub/'));
 });
 
 gulp.task('js:build', 'Deploy Javascript into Erlang folder', ['js:copy_html', 'js:doc'], function() {
 	return gulp.src('js_lib/*.js')
 		.pipe(babel())
-		.pipe(concat('multiscreen.all.min.js'))
+		.pipe(concat('microservicehub.all.min.js'))
 		.pipe(uglify())
-		.pipe(gulp.dest('rebar/priv/multiscreen/'));
+		.pipe(gulp.dest('rebar/priv/microservicehub/'));
 });
 
 gulp.task('js:doc', 'Generate Javascript Documentation', function() {
 	return gulp.src('')
 		.pipe(shell([
-			'./node_modules/.bin/jsdoc ./js_lib/*.js README.md --recurse --destination ./rebar/priv/multiscreen/doc'
+			'./node_modules/.bin/jsdoc ./js_lib/*.js README.md --recurse --destination ./rebar/priv/microservicehub/doc'
 		], {
 			'ignoreErrors' : true
 		}));

@@ -1,8 +1,8 @@
 {
-  "name": "MultiScreen-JS-library",
-  "version": "0.9.0",
-  "description": "MultiScreen library to access the Signove WebSocket implementation",
-  "repository": "bitbucket:mfabiop/erlang_websocket_server.git",
+  "name": "Micro-Service-HUB-JS-library",
+  "version": "1.0.0",
+  "description": "Micro Service HUB library to access the Signove Micro Service HUB implementation",
+  "repository": "git@github.com:signove/websocket-server.git",
   "devDependencies": {
     "deprecated": "0.0.1",
     "gulp": "3.9.0",

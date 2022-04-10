@@ -1,5 +1,5 @@
 
--module(multiscreen_ws_sup).
+-module(microservicehub_sup).
 
 -behaviour(supervisor).
 

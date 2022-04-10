@@ -1,23 +1,23 @@
 /**
-* @class MultiScreen
+* @class MicroService HUB
 * @classdesc Class to access the realtime channel
 *
 *
 * @example
 *  //Real time and configuration messages arrive as events
-* document.addEventListener('multiscreen.config.message'), function(e) {
+* document.addEventListener('microservicehub.config.message'), function(e) {
 *      var message = e.detail.message
 * });
 *
-* document.addEventListener('multiscreen.message', function(e) {
+* document.addEventListener('microservicehub.message', function(e) {
 *      var sender = e.detail.sender;
 *      var message = e.detail.message;
 * });
 */
-class MultiScreen {
+class MicroServiceHUB {
 
     /**
-    * @constructs MultiScreen
+    * @constructs MicroServiceHUB
     */
     constructor() {
         this.mSessionKey = undefined;
@@ -27,7 +27,7 @@ class MultiScreen {
     }
 
     /**
-    * @method MultiScreen#connect
+    * @method MicroServiceHUB#connect
     * @desc It will establish a connection to both the Real Time channel and the Configuration channel.
     *
     * @param webSocketURL The Web Socket URL to access the realtime channel
@@ -55,7 +55,7 @@ class MultiScreen {
             };
             this.mWebSocketRTObject.onmessage = (evt) => {
                 if ( evt.data instanceof ArrayBuffer ) {
-                    var { version, sender, payload } = Utils.readMultiscreenMessage(evt.data);
+                    var { version, sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
                     this.secretConfigKey = Utils.arrayBufferToString(payload);
                 } else {
                     this.secretConfigKey = evt.data;
@@ -79,23 +79,23 @@ class MultiScreen {
                 this.mWebSocketConfigObject.onmessage = (evt) => {
                     var data = "";
                     if ( evt.data instanceof ArrayBuffer ) {
-                        var { version, sender, payload } = Utils.readMultiscreenMessage(evt.data);
+                        var { version, sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
                         data = payload;
                     } else {
                         data = evt.data;
                     }
-                    document.dispatchEvent(new CustomEvent('multiscreen.config.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : data }  }));
+                    document.dispatchEvent(new CustomEvent('microservicehub.config.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : data }  }));
                 };
 
                 this.mWebSocketRTObject.onmessage = (evt) => {
                     var data = "";
                     if ( evt.data instanceof ArrayBuffer ) {
-                        var { version, sender, payload } = Utils.readMultiscreenMessage(evt.data);
+                        var { version, sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
                         data = payload;
                     } else {
                         data = evt.data;
                     }
-                    document.dispatchEvent(new CustomEvent('multiscreen.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : payload }  }));
+                    document.dispatchEvent(new CustomEvent('microservicehub.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : payload }  }));
                 };
             };
             this.mWebSocketRTObject.onerror = (evt) => {
@@ -108,7 +108,7 @@ class MultiScreen {
     }
 
     /**
-    * @method MultiScreen#disconnect
+    * @method MicroServiceHUB#disconnect
     * @desc Disconnect from both the Real Time channel and the Configuration channel.
     */
     disconnect() {
@@ -145,14 +145,14 @@ class MultiScreen {
     }
 
     /**
-    * @method MultiScreen#send
+    * @method MicroServiceHUB#send
     * @desc Send a message through the Real Time channel.
     *
     * @param message - The message as string.
     */
     send(message, receiver = "") {
         if(this.mWebSocketRTObject !== undefined) {
-            this.mWebSocketRTObject.send(Utils.createMultiscreenMessage(message, receiver));
+            this.mWebSocketRTObject.send(Utils.createMicroServiceHUBMessage(message, receiver));
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketRTObject === undefined) {
@@ -168,14 +168,14 @@ class MultiScreen {
     }
 
     /**
-    * @method MultiScreen#sendConfigMessage
+    * @method MicroServiceHUB#sendConfigMessage
     * @desc Send a config message through the Configuration channel.
     *
     * @param message The message as string.
     */
     sendConfigMessage(message) {
         if(this.mWebSocketConfigObject !== undefined) {
-            this.mWebSocketConfigObject.send(Utils.createMultiscreenMessage(message));
+            this.mWebSocketConfigObject.send(Utils.createMicroServiceHUBMessage(message));
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketConfigObject === undefined) {
