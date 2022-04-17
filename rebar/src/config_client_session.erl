@@ -1,59 +1,63 @@
 -module(config_client_session).
--behaviour(cowboy_websocket_handler).
+-behaviour(cowboy_websocket).
 
--export([init/3]).
--export([websocket_init/3]).
--export([websocket_handle/3]).
--export([websocket_info/3]).
--export([websocket_terminate/3]).
+-export([init/2]).
+-export([websocket_init/1]).
+-export([websocket_handle/2]).
+-export([websocket_info/2]).
+-export([terminate/3]).
 
-init({tcp, http}, Req, Opts) ->
-	{_, Req1} = cowboy_req:meta(websocket_version, Req, 13),
-	Req2 = cowboy_req:set_resp_header(<<"access-control-allow-methods">>, <<"GET, OPTIONS">>, Req1),
-	Req3 = cowboy_req:set_resp_header(<<"access-control-allow-origin">>, <<"*">>, Req2),
-	{upgrade, protocol, cowboy_websocket, Req3, Opts}.
+init(Req, _) ->
+	Opts = #{idle_timeout => infinity},
+	Req1 = cowboy_req:set_resp_header(<<"access-control-allow-methods">>, <<"GET, OPTIONS">>, Req),
+	Req2 = cowboy_req:set_resp_header(<<"access-control-allow-origin">>, <<"*">>, Req1),
+	ListQS = cowboy_req:parse_qs(Req2),
+	{cowboy_websocket, Req2, ListQS, Opts}.
 
-websocket_init(_TransportName, Req, _Opts) ->
-    case cowboy_req:qs_val(list_to_binary("session"), Req) of
-        { undefined , _ } ->
-            {shutdown, Req};
-        {SessionKey, _ } ->
+
+websocket_init(ListQS) ->
+		case lists:keyfind(<<"session">>, 1, ListQS) of
+        { _, undefined } ->
+			{close};
+        { _, SessionKey } ->
             SessionServerPid = server_session_manager:get_session_pid(SessionKey),
-            case cowboy_req:qs_val(list_to_binary("client"), Req) of
-				{ undefined, _ } ->
-					{shutdown, Req};
-				{ClientKey, _ } ->
+            case lists:keyfind(<<"client">>, 1, ListQS) of
+				{ _, undefined } ->
+					{close};
+				{ _, ClientKey } ->
 					ClientKeyHasSeparator = (string:chr(binary_to_list(ClientKey), $#) /= 0),
-					case cowboy_req:qs_val(list_to_binary("secret_config_key"), Req) of
-						{ undefined, _ } ->
-							{shutdown, Req};
-						{SecretKey, _} ->
+					case lists:keyfind(<<"secret_config_key">>, 1, ListQS) of
+						{ _, undefined } ->
+							{close};
+						{ _, SecretKey } ->
 							if
 								ClientKeyHasSeparator ->
 										io:format("ClientKey cannot have '#'", []),
-										{shutdown, Req};
+										{close};
 								true ->
-									Registered = (server_session:register(SessionServerPid, ClientKey, self(), { config_session, SecretKey }) /= rt_session_unavailable),
+									ClientPid = self(),
+									Registered = (server_session:register(SessionServerPid, ClientKey, ClientPid, { config_session, SecretKey }) /= rt_session_unavailable),
 									if
 										Registered ->
-											{ok, Req, { SessionServerPid , ClientKey} };
+										    io:format("Client registered: [SessionServerPid:~p] [ClientPid:~p] [ClientKey:~s] ~n", [SessionServerPid, ClientPid, ClientKey]),
+											{[], { SessionServerPid , ClientKey}};
 										true ->
-											{shutdown, Req}
+											{close}
 									end
 							end
 					end
 			end	
     end.
 
-websocket_handle({binary, Msg}, Req, {SessionServerPid, ClientKey}) ->
+websocket_handle({binary, Msg}, {SessionServerPid, ClientKey}) ->
 	server_session:handle_config_message(SessionServerPid, ClientKey, Msg),
-	{ok, Req, { SessionServerPid , ClientKey} }.
+	{[], { SessionServerPid , ClientKey} }.
 
-websocket_info({message, Msg}, Req, {SessionServerPid, ClientKey}) ->
-	{reply, {binary, Msg}, Req,  { SessionServerPid , ClientKey} };
-websocket_info({stop}, Req, {SessionServerPid, ClientKey}) ->
-	{shutdown, Req,  { SessionServerPid , ClientKey} }.
+websocket_info({message, Msg}, {SessionServerPid, ClientKey}) ->
+	{[{binary, Msg}],  { SessionServerPid , ClientKey} };
+websocket_info({stop}, {SessionServerPid, ClientKey}) ->
+	{stop, { SessionServerPid , ClientKey} }.
 
-websocket_terminate(_Reason, _Req, {_SessionServerPid, ClientKey}) ->
+terminate(_Reason, _Req, {_SessionServerPid, ClientKey}) ->
 	io:format("Config client ~s terminated ~n",[binary_to_list(ClientKey)]),
 	ok.

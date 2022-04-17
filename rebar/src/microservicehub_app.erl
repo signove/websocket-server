@@ -19,10 +19,10 @@ start(_StartType, _StartArgs) ->
             {"/microservicehub/[...]", cowboy_static, {priv_dir, microservicehub, "microservicehub"}}
         ]}
     ]),
-    {ok, _} = cowboy:start_http(http, 100, [{port, 8080}], [{env, [{dispatch, Dispatch}]}]),
+    {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{env => #{dispatch => Dispatch}}),
     %%SSLDir = code:priv_dir(microservicehub) ++ "/ssl/",
     %%io:format("~s ~n", [SSLDir]),
-    %%{ok, _} = cowboy:start_https(https, 100, [{port, 8080}, {certfile, SSLDir ++ "cert.pem"}, {keyfile, SSLDir ++ "key.pem"}], [{env, [{dispatch, Dispatch}]}]),
+    %%{ok, _} = cowboy:start_tls(https, [{port, 8080}, {certfile, SSLDir ++ "cert.pem"}, {keyfile, SSLDir ++ "key.pem"}], [{env, [{dispatch, Dispatch}]}]),
 
     microservicehub_sup:start_link().
 

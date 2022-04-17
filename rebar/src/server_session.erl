@@ -43,7 +43,7 @@ handle_call({ register, rt_session, ClientRTPid, ClientKey, ServerSessionPid }, 
           io:format("Client key already in use ~s ~n",[ClientKey]),
           {reply, client_key_duplicated, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } };
       true ->
-          io:format("RealTime session created to ~s in session ~w ~n",[ClientKey, ServerSessionPid]),
+          io:format("RealTime session created to [ClientKey:~s] in session [ServerSessionPid:~w] ~n",[ClientKey, ServerSessionPid]),
           ets:insert(ClientRTTable, { ClientKey, ClientRTPid, [receiver_on, sender_on] }),
           { Uuid, _ } = uuid:get_v1(uuid:new(ClientRTPid)),
           SecretKey = uuid:uuid_to_string(Uuid),
@@ -52,11 +52,11 @@ handle_call({ register, rt_session, ClientRTPid, ClientKey, ServerSessionPid }, 
 handle_call({ register, { config_session, SentSecretKey} , ClientConfigPid, ClientKey, ServerSessionPid }, _From, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable }) ->
     HasClientKey = ets:member(ClientRTTable, ClientKey),
     ValidSecretKey = ets:lookup_element(ClientConfigKeyTable, ClientKey, 2),
-    io:format("Valid secret key is ~s, used secret key is ~s ~n", [ValidSecretKey, SentSecretKey]),
+    io:format("Secret keys [ValidSecretKey:~s] [SentSecretKey:~s] ~n", [ValidSecretKey, SentSecretKey]),
     if
       HasClientKey ->
           %{ _ , ClientRTPid } = ets:lookup_element(ClientRTTable, ClientKey, 1),
-          io:format("Config session created to ~s in session ~w ~n",[ClientKey, ServerSessionPid]),
+          io:format("Config session created [ClientKey:~s] [ServerSessionPid:~w] ~n",[ClientKey, ServerSessionPid]),
           ets:insert(ClientConfigTable, { ClientKey, ClientConfigPid }),
           {reply, ok, { ClientRTTable, ClientConfigTable, ClientConfigKeyTable } };
       true ->
@@ -198,16 +198,18 @@ terminate( _ , {ServerSessionPid}) ->
 handle_broadcast_config_message(_, '$end_of_table', _) -> ok;
 handle_broadcast_config_message(ClientConfigTable, ClientKey , Message) ->
     [{_, ClientPid}|_] = ets:lookup(ClientConfigTable, ClientKey),
+    io:format("handle_broadcast_config_message: [ClientPid:~p] [Message:~w] ~n", [ClientPid, Message]),
     ClientPid ! {message, Message},
     handle_broadcast_config_message(ClientConfigTable, ets:next(ClientConfigTable, ClientKey), Message).
 
 handle_broadcast_rt_message(_, '$end_of_table', _) -> ok;
 handle_broadcast_rt_message(ClientRTTable, ClientKey , Message) ->
     [{_, ClientPid, ClientOptions}|_] = ets:lookup(ClientRTTable, ClientKey),
-    io:format("Options: ~w ~n", [ClientOptions]),
+    io:format("Options: ~w ClientPid: ~p ~n", [ClientOptions, ClientPid]),
     CanReceive = lists:member(receiver_on , ClientOptions),
     if
       CanReceive ->
+        io:format("handle_broadcast_rt_message: [ClientPid:~p] [Message:~w] ~n", [ClientPid, Message]),
         ClientPid ! {message, Message};
       true ->
         io:format("receive disabled for ~s ~n", [ClientKey])
