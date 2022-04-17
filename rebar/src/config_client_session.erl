@@ -39,7 +39,7 @@ websocket_init(ListQS) ->
 									Registered = (server_session:register(SessionServerPid, ClientKey, ClientPid, { config_session, SecretKey }) /= rt_session_unavailable),
 									if
 										Registered ->
-										    io:format("Client registered: [SessionServerPid:~p] [ClientPid:~p] [ClientKey:~s] ~n", [SessionServerPid, ClientPid, ClientKey]),
+										    io:format("Client has been registered: [SessionServerPid:~p] [ClientPid:~p] [ClientKey:~s] ~n", [SessionServerPid, ClientPid, ClientKey]),
 											{[], { SessionServerPid , ClientKey}};
 										true ->
 											{close}

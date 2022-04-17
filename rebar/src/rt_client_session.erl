@@ -47,18 +47,15 @@ websocket_init(ListQS) ->
     end.
 
 websocket_handle({binary, Msg}, {SessionServerPid, ClientKey}) ->
-    io:format("websocket_handle [SessionServerPid:~p] [ClientKey:~p] [Message:~w] ~n", [SessionServerPid, ClientKey, Msg]),
-	server_session:handle_rt_message(SessionServerPid, ClientKey, Msg),
+    server_session:handle_rt_message(SessionServerPid, ClientKey, Msg),
 	{[], { SessionServerPid , ClientKey} }.
 
 websocket_info({postinit, SecretConfigKey}, {SessionServerPid, ClientKey}) ->
-	io:format("websocket_info postinit [SessionServerPid:~p] [ClientKey:~p] [SecretConfigKey:~p] ~n", [SessionServerPid, ClientKey, SecretConfigKey]),
 	server_session:broadcast_config_message(SessionServerPid, ClientKey, <<"IN">>),
 	Message = server_session:generate_message(ClientKey, list_to_binary(SecretConfigKey)),
 	{[{binary, Message}], { SessionServerPid , ClientKey} };
 websocket_info({message, Msg}, {SessionServerPid, ClientKey}) ->
-    io:format("websocket_info message: [SessionServerPid:~p] [ClientKey:~p] [Msg:~p] ~n", [SessionServerPid, ClientKey, Msg]),
-	{[{binary, Msg}],  { SessionServerPid , ClientKey} };
+    {[{binary, Msg}],  { SessionServerPid , ClientKey} };
 websocket_info({stop}, {SessionServerPid, ClientKey}) ->
 	{stop, { SessionServerPid , ClientKey} }.
 

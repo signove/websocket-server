@@ -198,18 +198,15 @@ terminate( _ , {ServerSessionPid}) ->
 handle_broadcast_config_message(_, '$end_of_table', _) -> ok;
 handle_broadcast_config_message(ClientConfigTable, ClientKey , Message) ->
     [{_, ClientPid}|_] = ets:lookup(ClientConfigTable, ClientKey),
-    io:format("handle_broadcast_config_message: [ClientPid:~p] [Message:~w] ~n", [ClientPid, Message]),
     ClientPid ! {message, Message},
     handle_broadcast_config_message(ClientConfigTable, ets:next(ClientConfigTable, ClientKey), Message).
 
 handle_broadcast_rt_message(_, '$end_of_table', _) -> ok;
 handle_broadcast_rt_message(ClientRTTable, ClientKey , Message) ->
     [{_, ClientPid, ClientOptions}|_] = ets:lookup(ClientRTTable, ClientKey),
-    io:format("Options: ~w ClientPid: ~p ~n", [ClientOptions, ClientPid]),
     CanReceive = lists:member(receiver_on , ClientOptions),
     if
       CanReceive ->
-        io:format("handle_broadcast_rt_message: [ClientPid:~p] [Message:~w] ~n", [ClientPid, Message]),
         ClientPid ! {message, Message};
       true ->
         io:format("receive disabled for ~s ~n", [ClientKey])
