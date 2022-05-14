@@ -1,5 +1,5 @@
 /**
-* @class MicroService HUB
+* @class MicroServiceHUB
 * @classdesc Class to access the realtime channel
 *
 *

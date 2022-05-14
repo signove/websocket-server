@@ -40,7 +40,7 @@ class Utils {
     /**
      * Convert ArrayBuffer to string
      * @param {*} buf 
-     * @returns 
+     * @returns The array as string
      */
     static arrayBufferToString(buf) {
         return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -49,7 +49,7 @@ class Utils {
     /**
      * Convert string to ArrayBuffer
      * @param {*} str 
-     * @returns 
+     * @returns The string as array buffer
      */
     static stringToArrayBuffer(str, bufferLen = str.length) {
         var buf = new ArrayBuffer(bufferLen);
@@ -60,6 +60,11 @@ class Utils {
         return buf;
     } 
 
+    /**
+     * Read a MicroService HUB message
+     * @param {*} buffer 
+     * @returns An object with version, sender and payload of the message
+     */
     static readMicroServiceHUBMessage(buffer) {
         const RECEIVER_LENGTH = 20;
         const RECEIVER_POS_OFFSET = 2;
@@ -79,6 +84,12 @@ class Utils {
         return { version, sender, payload };
     }
 
+    /**
+     * Creates a MicroService HUB message
+     * @param {*} payload 
+     * @param {*} receiver 
+     * @returns Returns a message as array buffer
+     */
     static createMicroServiceHUBMessage(payload, receiver = "") {
         const VERSION = 1;
         const VERSION_LENGTH = 2
