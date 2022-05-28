@@ -4,10 +4,7 @@
 *
 *
 * @example
-*  //Real time and configuration messages arrive as events
-* document.addEventListener('microservicehub.config.message'), function(e) {
-*      var message = e.detail.message
-* });
+*  //Real time arrive as events
 *
 * document.addEventListener('microservicehub.message', function(e) {
 *      var sender = e.detail.sender;
@@ -23,12 +20,11 @@ class MicroServiceHUB {
         this.mSessionKey = undefined;
         this.mClientKey = undefined;
         this.mWebSocketRTObject = undefined;
-        this.mWebSocketConfigObject = undefined;
     }
 
     /**
     * @method MicroServiceHUB#connect
-    * @desc It will establish a connection to both the Real Time channel and the Configuration channel.
+    * @desc It will establish a connection to both the Real Time channel.
     *
     * @param webSocketURL The Web Socket URL to access the realtime channel
     * @param sessionKey The session identifier (Must be unique in the server)
@@ -46,7 +42,7 @@ class MicroServiceHUB {
             this.mWebSocketRTObject.binaryType = "arraybuffer";
         }
 
-        this.secretConfigKey = undefined;
+        this.secretClientKey = undefined;
 
         return new Promise((resolve, reject) => {
             this.mWebSocketRTObject.onopen = (evt) => {
@@ -56,36 +52,10 @@ class MicroServiceHUB {
             this.mWebSocketRTObject.onmessage = (evt) => {
                 if ( evt.data instanceof ArrayBuffer ) {
                     var { version, sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
-                    this.secretConfigKey = Utils.arrayBufferToString(payload);
+                    this.secretClientKey = Utils.arrayBufferToString(payload);
                 } else {
-                    this.secretConfigKey = evt.data;
+                    this.secretClientKey = evt.data;
                 }
-                this.mWebSocketConfigObject = new WebSocket(webSocketURL + "/config?secret_config_key=" +encodeURIComponent(this.secretConfigKey)+ "&session=" + encodeURIComponent(this.mSessionKey) + "&client=" + encodeURIComponent(this.mClientKey));
-                this.mWebSocketConfigObject.binaryType = "arraybuffer";
-
-                this.mWebSocketConfigObject.onopen = (evt) => {
-                    resolve(
-                        {
-                            sessionKey : this.mSessionKey,
-                            myKey : this.mClientKey
-                        }
-                    );
-                };
-
-                this.mWebSocketConfigObject.onerror = (evt) => {
-                    this.mWebSocketConfigObject = undefined;
-                };
-
-                this.mWebSocketConfigObject.onmessage = (evt) => {
-                    var data = "";
-                    if ( evt.data instanceof ArrayBuffer ) {
-                        var { version, sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
-                        data = payload;
-                    } else {
-                        data = evt.data;
-                    }
-                    document.dispatchEvent(new CustomEvent('microservicehub.config.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : data }  }));
-                };
 
                 this.mWebSocketRTObject.onmessage = (evt) => {
                     var data = "";
@@ -101,7 +71,6 @@ class MicroServiceHUB {
             this.mWebSocketRTObject.onerror = (evt) => {
                 this.mSessionKey = undefined;
                 this.mClientKey = undefined;
-                this.mWebSocketConfigObject = undefined;
                 reject(evt);
             };
         });
@@ -109,14 +78,11 @@ class MicroServiceHUB {
 
     /**
     * @method MicroServiceHUB#disconnect
-    * @desc Disconnect from both the Real Time channel and the Configuration channel.
+    * @desc Disconnect from both the Real Time channel.
     */
     disconnect() {
         if(this.mWebSocketRTObject) {
             this.mWebSocketRTObject.close();
-        }
-        if(this.mWebSocketConfigObject) {
-            this.mWebSocketConfigObject.close();
         }
 
         var promiseCloseRT = new Promise((resolve, reject) => {
@@ -130,18 +96,7 @@ class MicroServiceHUB {
             }
         });
 
-        var promiseCloseConfig = new Promise((resolve, reject) => {
-            if(!this.mWebSocketConfigObject) {
-                resolve("Config session not opened");
-            } else {
-                this.mWebSocketConfigObject.onclose = (evt) => {
-                    this.mWebSocketConfigObject = undefined;
-                    resolve("Config session closed");
-                };
-            }
-        });
-
-        return Promise.all([promiseCloseRT, promiseCloseConfig]);
+        return Promise.all([promiseCloseRT]);
     }
 
     /**
@@ -156,29 +111,6 @@ class MicroServiceHUB {
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketRTObject === undefined) {
-                reject(
-                    {
-                        message : "It is not connected!"
-                    }
-                );
-            } else {
-                resolve();
-            }
-        });
-    }
-
-    /**
-    * @method MicroServiceHUB#sendConfigMessage
-    * @desc Send a config message through the Configuration channel.
-    *
-    * @param message The message as string.
-    */
-    sendConfigMessage(message) {
-        if(this.mWebSocketConfigObject !== undefined) {
-            this.mWebSocketConfigObject.send(Utils.createMicroServiceHUBMessage(message));
-        }
-        return new Promise((resolve, reject) => {
-            if(this.mWebSocketConfigObject === undefined) {
                 reject(
                     {
                         message : "It is not connected!"

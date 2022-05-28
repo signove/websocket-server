@@ -52,7 +52,7 @@ module.exports = function(grunt) {
   
     grunt.registerTask('default', ['build']);
     
-    grunt.registerTask('js:build', ['uglify']);
+    grunt.registerTask('js:build', ['uglify', 'js:copy_html', 'js:doc']);
 
     grunt.registerTask('js:doc', ['shell:js_doc']);
 

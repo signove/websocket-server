@@ -15,7 +15,6 @@ start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile([
         {'_', [
             {"/websocket", rt_client_session, []},
-            {"/websocket/config", config_client_session, []},
             {"/microservicehub/[...]", cowboy_static, {priv_dir, microservicehub, "microservicehub"}}
         ]}
     ]),

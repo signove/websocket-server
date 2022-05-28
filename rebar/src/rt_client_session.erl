@@ -51,7 +51,6 @@ websocket_handle({binary, Msg}, {SessionServerPid, ClientKey}) ->
 	{[], { SessionServerPid , ClientKey} }.
 
 websocket_info({postinit, SecretConfigKey}, {SessionServerPid, ClientKey}) ->
-	server_session:broadcast_config_message(SessionServerPid, ClientKey, <<"IN">>),
 	Message = server_session:generate_message(ClientKey, list_to_binary(SecretConfigKey)),
 	{[{binary, Message}], { SessionServerPid , ClientKey} };
 websocket_info({message, Msg}, {SessionServerPid, ClientKey}) ->
@@ -61,6 +60,5 @@ websocket_info({stop}, {SessionServerPid, ClientKey}) ->
 
 terminate(Reason, _Req, {SessionServerPid, ClientKey}) ->
 	io:format("Websocket closed, reason [~p] \n", [Reason]),
-	server_session:broadcast_config_message(SessionServerPid, ClientKey, <<"OUT">>),
 	server_session:unregister(SessionServerPid, ClientKey, self()),
 	ok.

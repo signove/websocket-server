@@ -36,11 +36,6 @@
           message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
       });
 
-      document.addEventListener("microservicehub.config.message", function(e) {
-          var message_log = document.getElementById('message_config_log');
-          message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
-      });
-
       function sendMessageButton() {
         var message = document.getElementById('message').value;
         var receiver = document.getElementById('receiver').value;
@@ -48,21 +43,6 @@
           receiver = undefined;
         }
         m.send(Utils.stringToArrayBuffer(message), receiver)
-          .then(function() {
-              console.log("Message sent!");
-          })
-          .catch(function(evt) {
-              alert(evt.message);
-          })
-      }
-
-      function sendConfigMessageButton() {
-        var message = document.getElementById('config-general-message').value;
-        if(message == "") {
-          message = document.getElementById('config-message').value;
-        }
-        console.log(message);
-        m.sendConfigMessage(Utils.stringToArrayBuffer(message))
           .then(function() {
               console.log("Message sent!");
           })
@@ -80,24 +60,6 @@
         if (e.keyCode == 13) {
             sendMessageButton();
         }
-      }
-
-
-      function detectEnterKeyConfig(e) {
-        if (e.keyCode == 13) {
-            sendConfigMessageButton();
-        }
-      }
-
-      function updateOptions(val) {
-        var message = eval(val);
-        m.sendConfigMessage(Utils.stringToArrayBuffer(message))
-          .then(function() {
-              console.log("Config message sent!");
-          })
-          .catch(function(evt) {
-              alert(evt.message);
-          })
       }
 
     </script>
@@ -147,16 +109,6 @@
         <input type="text" id="receiver" value=""><label>Receiver</label>
         <br/><button onclick="sendMessageButton()">Send message</button>
         <br/><textarea id="message_log"></textarea>
-      </div>
-      <div>
-        <div></div>
-        <br/>
-        <select id="config-message">
-          <option value="GET_OPTIONS">GET_OPTIONS</option>
-        </select><label>Config message</label>
-        <br/><input type="text" id="config-general-message">
-        <br/><button onclick="sendConfigMessageButton()">Send config</button>
-        <br/><textarea id="message_config_log"></textarea>
       </div>
     </div>
   </body>
