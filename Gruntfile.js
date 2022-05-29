@@ -3,12 +3,19 @@ module.exports = function(grunt) {
     // Project configuration.
     grunt.initConfig({
       pkg: grunt.file.readJSON('package.json'),
+      concat: {
+        dist: {
+            src: 'js_lib/*.js',
+            dest: 'rebar/priv/microservicehub/microservicehub.all.js' 
+        }
+      },
       uglify: {
         options: {
-          banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+            banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
+            sourceMap : true
         },
         build: {
-          src: 'js_lib/*.js',
+          src: 'rebar/priv/microservicehub/microservicehub.all.js',
           dest: 'rebar/priv/microservicehub/microservicehub.all.min.js'
         }
       },
@@ -48,11 +55,12 @@ module.exports = function(grunt) {
     });
   
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-shell');
   
     grunt.registerTask('default', ['build']);
     
-    grunt.registerTask('js:build', ['uglify', 'js:copy_html', 'js:doc']);
+    grunt.registerTask('js:build', ['concat', 'uglify', 'js:copy_html', 'js:doc']);
 
     grunt.registerTask('js:doc', ['shell:js_doc']);
 

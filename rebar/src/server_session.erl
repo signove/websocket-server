@@ -36,7 +36,7 @@ handle_call({ register, rt_session, ClientRTPid, ClientKey, ServerSessionPid }, 
           {reply, client_key_duplicated, { ClientRTTable, ClientSecretKeyTable } };
       true ->
           io:format("RealTime session created to [ClientKey:~s] in session [ServerSessionPid:~w] ~n",[ClientKey, ServerSessionPid]),
-          ets:insert(ClientRTTable, { ClientKey, ClientRTPid, [receiver_on, sender_on] }),
+          ets:insert(ClientRTTable, { ClientKey, ClientRTPid }),
           { Uuid, _ } = uuid:get_v1(uuid:new(ClientRTPid)),
           SecretKey = uuid:uuid_to_string(Uuid),
           {reply, {ok, SecretKey}, { ClientRTTable, ClientSecretKeyTable } }
@@ -54,20 +54,14 @@ handle_call({ unregister, ClientRTPid, ClientKey, ServerSessionPid }, _From, { C
 handle_call({ set_secret_config_key, ClientKey, SecretKey }, _From, {ClientRTTable, ClientSecretKeyTable}) ->
     ets:insert(ClientSecretKeyTable, { ClientKey, SecretKey }),
     {reply, ok, { ClientRTTable, ClientSecretKeyTable } };
-handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, Version, ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
+% Hndle protocol version 1
+handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, <<0,1>>, ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
     Receiver = remove_right_zeros(ReceiverBin),
-    io:format("Protocol version [~p] - RealTime message [~p], received from ~p and sending to ~p ~n", [Version, Payload, ClientKey, Receiver]),
+    io:format("Protocol version [1] - RealTime message [~p], received from ~p and sending to ~p ~n", [Payload, ClientKey, Receiver]),
     if
       Receiver ==  <<"">>->
-        ClientOptions = ets:lookup_element(ClientRTTable, ClientKey, 3),
-        CanSend = lists:member(sender_on , ClientOptions),
-        if
-          CanSend ->
-            Message = generate_message(ClientKey, Payload),
-            handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), Message);
-          true ->
-            io:format("send disabled for ~s ~n", [ClientKey])
-        end;
+        Message = generate_message(ClientKey, Payload),
+        handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), Message);
       true ->
         Message = generate_message(ClientKey, Payload),
         IsValidReceiver = ets:member(ClientRTTable, Receiver),
@@ -79,7 +73,11 @@ handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, Version, Receiver
             io:format("invalid receiver ~s ~n", [Receiver])
         end
     end,
+    {reply, ok, {ClientRTTable, ClientSecretKeyTable} };
+handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, UnsupportedVersion, _ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
+    io:format("Protocol version [~p] - RealTime message [~p], received from ~p NOT SUPPORTED ~n", [UnsupportedVersion, Payload, ClientKey]),
     {reply, ok, {ClientRTTable, ClientSecretKeyTable} }.
+
 
 remove_right_zeros(Bin) ->
   list_to_binary(lists:reverse(lists:dropwhile(fun(0) -> true; (_) -> false end, lists:reverse(binary_to_list(Bin))))).
@@ -102,12 +100,6 @@ terminate( _ , {ServerSessionPid}) ->
 
 handle_broadcast_rt_message(_, '$end_of_table', _) -> ok;
 handle_broadcast_rt_message(ClientRTTable, ClientKey , Message) ->
-    [{_, ClientPid, ClientOptions}|_] = ets:lookup(ClientRTTable, ClientKey),
-    CanReceive = lists:member(receiver_on , ClientOptions),
-    if
-      CanReceive ->
-        ClientPid ! {message, Message};
-      true ->
-        io:format("receive disabled for ~s ~n", [ClientKey])
-    end,
+    [{_, ClientPid }|_] = ets:lookup(ClientRTTable, ClientKey),
+    ClientPid ! {message, Message},
     handle_broadcast_rt_message(ClientRTTable, ets:next(ClientRTTable, ClientKey), Message).

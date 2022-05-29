@@ -23,26 +23,19 @@ websocket_init(ListQS) ->
             case lists:keyfind(<<"client">>, 1, ListQS) of
 				{_, undefined } ->
 						{close};
-				{_, ClientKey } ->
-						ClientKeyHasSeparator = (string:chr(binary_to_list(ClientKey), $#) /= 0),
-						if
-							ClientKeyHasSeparator ->
-								io:format("ClientKey cannot have '#'", []),
-								{close};
-							true ->
-								quickrand:seed(),
-								RegisterReply = server_session:register(SessionServerPid, ClientKey, self(), rt_session),
-								if
-									(RegisterReply /= client_key_duplicated) ->
-										SecretConfigKey = element(2,RegisterReply),
-										server_session:set_secret_config_key(SessionServerPid, ClientKey, SecretConfigKey),
-										io:format("Secret key used by config session [SecretConfigKey:~s] [ClientPid:~w] [ClientKey:~s] ~n", [SecretConfigKey, self(), ClientKey]),
-										self() ! {postinit, SecretConfigKey},
-										{[], { SessionServerPid , ClientKey }};
-									true ->
-										{close}
-								end
-						end
+				{_, ClientKey } ->						
+					quickrand:seed(),
+					RegisterReply = server_session:register(SessionServerPid, ClientKey, self(), rt_session),
+					if
+						(RegisterReply /= client_key_duplicated) ->
+							SecretClientKey = element(2,RegisterReply),
+							server_session:set_secret_config_key(SessionServerPid, ClientKey, SecretClientKey),
+							io:format("Secret key used by RT session [SecretClientKey:~s] [ClientPid:~w] [ClientKey:~s] ~n", [SecretClientKey, self(), ClientKey]),
+							self() ! {postinit, SecretClientKey},
+							{[], { SessionServerPid , ClientKey }};
+						true ->
+							{close}
+					end
 			end
     end.
 
@@ -50,8 +43,8 @@ websocket_handle({binary, Msg}, {SessionServerPid, ClientKey}) ->
     server_session:handle_rt_message(SessionServerPid, ClientKey, Msg),
 	{[], { SessionServerPid , ClientKey} }.
 
-websocket_info({postinit, SecretConfigKey}, {SessionServerPid, ClientKey}) ->
-	Message = server_session:generate_message(ClientKey, list_to_binary(SecretConfigKey)),
+websocket_info({postinit, SecretClientKey}, {SessionServerPid, ClientKey}) ->
+	Message = server_session:generate_message(ClientKey, list_to_binary(SecretClientKey)),
 	{[{binary, Message}], { SessionServerPid , ClientKey} };
 websocket_info({message, Msg}, {SessionServerPid, ClientKey}) ->
     {[{binary, Msg}],  { SessionServerPid , ClientKey} };
