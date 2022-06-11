@@ -85,12 +85,12 @@ class Utils {
     }
 
     /**
-     * Creates a MicroService HUB message
+     * Creates a version 1 MicroService HUB message
      * @param {*} payload 
      * @param {*} receiver 
      * @returns Returns a message as array buffer
      */
-    static createMicroServiceHUBMessage(payload, receiver = "") {
+    static createMicroServiceHUBMessageV1(payload, receiver = "") {
         const VERSION = 1;
         const VERSION_LENGTH = 2
         const RECEIVER_LENGTH = 20;
@@ -101,13 +101,47 @@ class Utils {
         var buf = new ArrayBuffer(VERSION_LENGTH + RECEIVER_LENGTH + payload.byteLength);
         var dataview = new DataView(buf);
         dataview.setUint16(0, VERSION);
-  			var receiverView = new DataView(buf, RECEIVER_POS_OFFSET, RECEIVER_LENGTH);
+        var receiverView = new DataView(buf, RECEIVER_POS_OFFSET, RECEIVER_LENGTH);
         for (var i=0; i < (receiver.length); i++) {
             receiverView.setUint8(i, receiver.charCodeAt(i));
         }
   	
   		var sourcePayloadView = new DataView(payload);        
         var targetPayloadView = new DataView(buf, VERSION_LENGTH + RECEIVER_LENGTH);
+        for (var i=0; i < (sourcePayloadView.byteLength); i++) {
+            targetPayloadView.setUint8(i, sourcePayloadView.getUint8(i));
+        }
+        return buf;
+    }
+
+    /**
+     * Creates a version 2 MicroService HUB message
+     * @param {*} payload 
+     * @param {*} receiver 
+     * @returns Returns a message as array buffer
+     */
+    static createMicroServiceHUBMessageV2(command, payload, receiver = "") {
+        const VERSION = 2;
+        const VERSION_LENGTH = 2
+        const RECEIVER_LENGTH = 20;
+        const RECEIVER_POS_OFFSET = 2;
+        const COMMAND_LENGTH = 1;
+
+        receiver = receiver.substring(0, RECEIVER_LENGTH);
+
+        var buf = new ArrayBuffer(VERSION_LENGTH + RECEIVER_LENGTH + COMMAND_LENGTH + payload.byteLength);
+        var dataview = new DataView(buf);
+        dataview.setUint16(0, VERSION);
+        var receiverView = new DataView(buf, RECEIVER_POS_OFFSET, RECEIVER_LENGTH);
+        for (var i=0; i < (receiver.length); i++) {
+            receiverView.setUint8(i, receiver.charCodeAt(i));
+        }
+        
+        var commandview = new DataView(buf, VERSION_LENGTH + RECEIVER_LENGTH, 1);
+        commandview.setUint8(0, command);
+
+        var sourcePayloadView = new DataView(payload);        
+        var targetPayloadView = new DataView(buf, VERSION_LENGTH + RECEIVER_LENGTH + COMMAND_LENGTH);
         for (var i=0; i < (sourcePayloadView.byteLength); i++) {
             targetPayloadView.setUint8(i, sourcePayloadView.getUint8(i));
         }

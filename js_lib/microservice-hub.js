@@ -107,7 +107,7 @@ class MicroServiceHUB {
     */
     send(message, receiver = "") {
         if(this.mWebSocketRTObject !== undefined) {
-            this.mWebSocketRTObject.send(Utils.createMicroServiceHUBMessage(message, receiver));
+            this.mWebSocketRTObject.send(Utils.createMicroServiceHUBMessageV2(0, message, receiver));
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketRTObject === undefined) {

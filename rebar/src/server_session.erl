@@ -54,7 +54,7 @@ handle_call({ unregister, ClientRTPid, ClientKey, ServerSessionPid }, _From, { C
 handle_call({ set_secret_config_key, ClientKey, SecretKey }, _From, {ClientRTTable, ClientSecretKeyTable}) ->
     ets:insert(ClientSecretKeyTable, { ClientKey, SecretKey }),
     {reply, ok, { ClientRTTable, ClientSecretKeyTable } };
-% Hndle protocol version 1
+% Handle protocol version 1
 handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, <<0,1>>, ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
     Receiver = remove_right_zeros(ReceiverBin),
     io:format("Protocol version [1] - RealTime message [~p], received from ~p and sending to ~p ~n", [Payload, ClientKey, Receiver]),
@@ -74,10 +74,36 @@ handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, <<0,1>>, Receiver
         end
     end,
     {reply, ok, {ClientRTTable, ClientSecretKeyTable} };
+% Handle protocol version 2
+handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, <<0,2>>, ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
+    Receiver = remove_right_zeros(ReceiverBin),
+    io:format("Protocol version [2] - RealTime message [~p], received from ~p and sending to ~p ~n", [Payload, ClientKey, Receiver]),
+    <<Command:1/binary-unit:8, Message/binary>> = Payload,
+    handle_rt_message_v2(Command, Message, ClientKey, Receiver, ClientRTTable),
+    {reply, ok, {ClientRTTable, ClientSecretKeyTable} };
 handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, UnsupportedVersion, _ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
     io:format("Protocol version [~p] - RealTime message [~p], received from ~p NOT SUPPORTED ~n", [UnsupportedVersion, Payload, ClientKey]),
     {reply, ok, {ClientRTTable, ClientSecretKeyTable} }.
 
+
+handle_rt_message_v2(<<0>>, RawMessage, ClientKey, Receiver, ClientRTTable) ->
+    if
+      Receiver ==  <<"">>->
+        Message = generate_message(ClientKey, RawMessage),
+        handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), Message);
+      true ->
+        Message = generate_message(ClientKey, RawMessage),
+        IsValidReceiver = ets:member(ClientRTTable, Receiver),
+        if
+          IsValidReceiver ->
+            [{_, ReceiverClientPid, _}|_] = ets:lookup(ClientRTTable, Receiver),
+            ReceiverClientPid ! {message, Message};
+          true ->
+            io:format("invalid receiver ~s ~n", [Receiver])
+        end
+    end;
+handle_rt_message_v2(UnknownCommand, RawMessage, ClientKey, _Receiver, _ClientRTTable) ->
+  io:format("Unknown command [~p] in protocol version 2 RealTime message [~p], received from ~p NOT SUPPORTED ~n", [UnknownCommand, RawMessage, ClientKey]).
 
 remove_right_zeros(Bin) ->
   list_to_binary(lists:reverse(lists:dropwhile(fun(0) -> true; (_) -> false end, lists:reverse(binary_to_list(Bin))))).
