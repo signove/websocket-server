@@ -44,7 +44,7 @@ websocket_handle({binary, Msg}, {SessionServerPid, ClientKey}) ->
 	{[], { SessionServerPid , ClientKey} }.
 
 websocket_info({postinit, SecretClientKey}, {SessionServerPid, ClientKey}) ->
-	Message = server_session:generate_message(ClientKey, list_to_binary(SecretClientKey)),
+	Message = utils:generate_message(ClientKey, list_to_binary(SecretClientKey)),
 	{[{binary, Message}], { SessionServerPid , ClientKey} };
 websocket_info({message, Msg}, {SessionServerPid, ClientKey}) ->
     {[{binary, Msg}],  { SessionServerPid , ClientKey} };

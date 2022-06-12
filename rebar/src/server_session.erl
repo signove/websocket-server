@@ -6,7 +6,7 @@
 
 % API
 -export([register/4, unregister/3]).
--export([set_secret_config_key/3, generate_message/2]).
+-export([set_secret_config_key/3]).
 -export([handle_rt_message/3, handle_broadcast_rt_message/3]).
 
 init(_Args) ->
@@ -56,70 +56,18 @@ handle_call({ set_secret_config_key, ClientKey, SecretKey }, _From, {ClientRTTab
     {reply, ok, { ClientRTTable, ClientSecretKeyTable } };
 % Handle protocol version 1
 handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, <<0,1>>, ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
-    Receiver = remove_right_zeros(ReceiverBin),
-    io:format("Protocol version [1] - RealTime message [~p], received from ~p and sending to ~p ~n", [Payload, ClientKey, Receiver]),
-    if
-      Receiver ==  <<"">>->
-        Message = generate_message(ClientKey, Payload),
-        handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), Message);
-      true ->
-        Message = generate_message(ClientKey, Payload),
-        IsValidReceiver = ets:member(ClientRTTable, Receiver),
-        if
-          IsValidReceiver ->
-            [{_, ReceiverClientPid, _}|_] = ets:lookup(ClientRTTable, Receiver),
-            ReceiverClientPid ! {message, Message};
-          true ->
-            io:format("invalid receiver ~s ~n", [Receiver])
-        end
-    end,
+    protocol_v1:handle_message(Payload, ClientKey, ReceiverBin, ClientRTTable),
     {reply, ok, {ClientRTTable, ClientSecretKeyTable} };
 % Handle protocol version 2
 handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, <<0,2>>, ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
-    Receiver = remove_right_zeros(ReceiverBin),
+    Receiver = utils:remove_right_zeros(ReceiverBin),
     io:format("Protocol version [2] - RealTime message [~p], received from ~p and sending to ~p ~n", [Payload, ClientKey, Receiver]),
     <<Command:1/binary-unit:8, Message/binary>> = Payload,
-    handle_rt_message_v2(Command, Message, ClientKey, Receiver, ClientRTTable),
+    protocol_v2:handle_message(Command, Message, ClientKey, Receiver, ClientRTTable),
     {reply, ok, {ClientRTTable, ClientSecretKeyTable} };
 handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, UnsupportedVersion, _ReceiverBin, Payload}, _From, {ClientRTTable, ClientSecretKeyTable}) ->
     io:format("Protocol version [~p] - RealTime message [~p], received from ~p NOT SUPPORTED ~n", [UnsupportedVersion, Payload, ClientKey]),
     {reply, ok, {ClientRTTable, ClientSecretKeyTable} }.
-
-
-handle_rt_message_v2(<<0>>, RawMessage, ClientKey, Receiver, ClientRTTable) ->
-    if
-      Receiver ==  <<"">>->
-        Message = generate_message(ClientKey, RawMessage),
-        handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), Message);
-      true ->
-        Message = generate_message(ClientKey, RawMessage),
-        IsValidReceiver = ets:member(ClientRTTable, Receiver),
-        if
-          IsValidReceiver ->
-            [{_, ReceiverClientPid, _}|_] = ets:lookup(ClientRTTable, Receiver),
-            ReceiverClientPid ! {message, Message};
-          true ->
-            io:format("invalid receiver ~s ~n", [Receiver])
-        end
-    end;
-handle_rt_message_v2(UnknownCommand, RawMessage, ClientKey, _Receiver, _ClientRTTable) ->
-  io:format("Unknown command [~p] in protocol version 2 RealTime message [~p], received from ~p NOT SUPPORTED ~n", [UnknownCommand, RawMessage, ClientKey]).
-
-remove_right_zeros(Bin) ->
-  list_to_binary(lists:reverse(lists:dropwhile(fun(0) -> true; (_) -> false end, lists:reverse(binary_to_list(Bin))))).
-
-pad_bin(Bin, FinalSize) ->
-  if
-    size(Bin) > FinalSize ->
-      Bin;
-    true ->
-      <<Bin/binary, 0:((FinalSize - size(Bin))*8)>>
-  end.
-
-generate_message(Sender, Payload) ->
-  Version = <<0,1>>,
-  SenderPadded = pad_bin(Sender, 20),
-  <<Version/binary, SenderPadded/binary, Payload/binary>>.
 
 terminate( _ , {ServerSessionPid}) ->
     server_session_manager:delete_session_by_pid(ServerSessionPid).
