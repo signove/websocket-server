@@ -103,11 +103,11 @@ class MicroServiceHUB {
     * @method MicroServiceHUB#send
     * @desc Send a message through the Real Time channel.
     *
-    * @param message - The message as string.
+    * @param message - The message as byte array.
     */
-    send(message, receiver = "") {
+    send(message) {
         if(this.mWebSocketRTObject !== undefined) {
-            this.mWebSocketRTObject.send(Utils.createMicroServiceHUBMessageV2(0, message, receiver));
+            this.mWebSocketRTObject.send(message);
         }
         return new Promise((resolve, reject) => {
             if(this.mWebSocketRTObject === undefined) {

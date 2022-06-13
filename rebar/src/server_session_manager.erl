@@ -3,6 +3,7 @@
 -export([start/0, get_session_pid/1, delete_session_by_pid/1, stop/1]).
 
 start() ->
+    protocol_v2:start(),
     ets:new(session_list, [named_table, public]).
 
 stop('$end_of_table') -> done;

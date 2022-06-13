@@ -39,10 +39,36 @@
       function sendMessageButton() {
         var message = document.getElementById('message').value;
         var receiver = document.getElementById('receiver').value;
+
         if(receiver == "") {
           receiver = undefined;
         }
-        m.send(Utils.stringToArrayBuffer(message), receiver)
+
+        message = Utils.createMicroServiceHUBMessageV2(0, Utils.stringToArrayBuffer(document.getElementById('message').value), receiver);
+        m.send(message)
+          .then(function() {
+              console.log("Message sent!");
+          })
+          .catch(function(evt) {
+              alert(evt.message);
+          })
+      }
+
+      function writeMemoryButton() {
+        var memory = Utils.stringToArrayBuffer(document.getElementById('memory_write').value);
+        var message = Utils.createMicroServiceHUBMessageV2(1, memory)
+        m.send(message)
+          .then(function() {
+              console.log("Message sent!");
+          })
+          .catch(function(evt) {
+              alert(evt.message);
+          })
+      }
+
+      function readMemoryButton() {
+        var message = Utils.createMicroServiceHUBMessageV2(2, Utils.stringToArrayBuffer(""));
+        m.send(message)
           .then(function() {
               console.log("Message sent!");
           })
@@ -110,6 +136,12 @@
         <br/><button onclick="sendMessageButton()">Send message</button>
         <br/><textarea id="message_log"></textarea>
       </div>
+    </div>
+    <div>
+      <input type="text" id="memory_write" value=""><label>Memory Write</label>
+      <br/><button onclick="writeMemoryButton()">Write memory</button>
+      <br/><button onclick="readMemoryButton()">Read memory</button>
+      <br/><textarea id="memory_read"></textarea>
     </div>
   </body>
 </html>

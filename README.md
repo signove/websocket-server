@@ -70,7 +70,7 @@ WantedBy=multi-user.target
 To deploy the code as a docker container, follow the below steps:
 
 * Execute the command `docker build . -t microservice-hub:latest`
-* Then execute the command `docker run -d -p 8080:8080 microservice-hub:latest`
+* Then execute the comma1nd `docker run -d -p 8080:8080 microservice-hub:latest`
 
 
 ### Usage ###
