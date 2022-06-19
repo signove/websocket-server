@@ -7,7 +7,7 @@
 % API
 -export([register/4, unregister/3]).
 -export([set_secret_config_key/3]).
--export([handle_rt_message/3, handle_broadcast_rt_message/3]).
+-export([handle_rt_message/3, handle_broadcast_message/3, handle_direct_message/3]).
 
 init(_Args) ->
     % Two tables, one for RT communication and other to Configuration
@@ -72,8 +72,12 @@ handle_call({ handle_rt_message, _ServerSessionPid, ClientKey, UnsupportedVersio
 terminate( _ , {ServerSessionPid}) ->
     server_session_manager:delete_session_by_pid(ServerSessionPid).
 
-handle_broadcast_rt_message(_, '$end_of_table', _) -> ok;
-handle_broadcast_rt_message(ClientRTTable, ClientKey , Message) ->
+handle_direct_message(ClientRTTable, ClientKey, Message) ->
+    [{_, ClientPid }|_] = ets:lookup(ClientRTTable, ClientKey),
+    ClientPid ! {message, Message}.
+
+handle_broadcast_message(_, '$end_of_table', _) -> ok;
+handle_broadcast_message(ClientRTTable, ClientKey , Message) ->
     [{_, ClientPid }|_] = ets:lookup(ClientRTTable, ClientKey),
     ClientPid ! {message, Message},
-    handle_broadcast_rt_message(ClientRTTable, ets:next(ClientRTTable, ClientKey), Message).
+    handle_broadcast_message(ClientRTTable, ets:next(ClientRTTable, ClientKey), Message).

@@ -58,30 +58,34 @@ class Utils {
           bufView[i] = str.charCodeAt(i);
         }
         return buf;
-    } 
+    }
+    
+    private readMicroServiceHUBMessageV1() {
+        
+    }
 
     /**
      * Read a MicroService HUB message
      * @param {*} buffer 
-     * @returns An object with version, sender and payload of the message
+     * @returns An object with sender and payload of the message
      */
     static readMicroServiceHUBMessage(buffer) {
+        const VERSION_LENGTH = 2;
         const RECEIVER_LENGTH = 20;
-        const RECEIVER_POS_OFFSET = 2;
-        const PAYLOAD_POS_OFFSET = 22;
+        const PAYLOAD_POS_OFFSET = 20;
         var senderArray = [];
-        var version = undefined;
 
-        var dataview = new DataView(buffer);
-        version = dataview.getUint16(0);
-  		var senderView = new DataView(buffer, RECEIVER_POS_OFFSET, RECEIVER_LENGTH);
+        var version = new DataView(buffer, 0, VERSION_LENGTH);
+
+
+  		var senderView = new DataView(buffer, 0, RECEIVER_LENGTH);
         for (var i=0; i < senderView.byteLength && senderView.getUint8(i) != 0; i++) {
             senderArray[i] = String.fromCharCode(senderView.getUint8(i));
         }
   		var sender = senderArray.join('');
         var payload = buffer.slice(PAYLOAD_POS_OFFSET);
         
-        return { version, sender, payload };
+        return { sender, payload };
     }
 
     /**

@@ -33,7 +33,7 @@ The protocol uses binary format to transfer data. It is as follows.
 
 version:2 bytes|client_key: 20 bytes|payload: rest bytes
 
-The methods (buffer = Utils.createMicroServiceHUBMessage(receiver, payload)) and ({ version, sender, payload } = Utils.readMicroServiceHUBMessage(buffer)) can be used to create a valid message.
+The methods (buffer = Utils.createMicroServiceHUBMessage(receiver, payload)) and ({ sender, payload } = Utils.readMicroServiceHUBMessage(buffer)) can be used to create a valid message.
 
 ### Deploy production version ###
 

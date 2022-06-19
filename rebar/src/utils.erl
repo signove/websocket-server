@@ -15,6 +15,5 @@ pad_bin(Bin, FinalSize) ->
   end.
 
 generate_message(Sender, Payload) ->
-  Version = <<0,1>>,
   SenderPadded = pad_bin(Sender, 20),
-  <<Version/binary, SenderPadded/binary, Payload/binary>>.
+  <<SenderPadded/binary, Payload/binary>>.

@@ -8,12 +8,12 @@ start() ->
 
 % Command 0 - RT default messages sent to another clients
 handle_message(<<0>>, RawMessage, ClientKey, Receiver, ClientRTTable) ->
+  MessageWithoutCommand = utils:generate_message(ClientKey, RawMessage),
+  Message = << <<0, 2, 0>>/binary, MessageWithoutCommand/binary >>,
   if
     Receiver ==  <<"">>->
-      Message = utils:generate_message(ClientKey, RawMessage),
-      server_session:handle_broadcast_rt_message(ClientRTTable, ets:first(ClientRTTable), Message);
+      server_session:handle_broadcast_message(ClientRTTable, ets:first(ClientRTTable), Message);
     true ->
-      Message = utils:generate_message(ClientKey, RawMessage),
       IsValidReceiver = ets:member(ClientRTTable, Receiver),
       if
         IsValidReceiver ->
@@ -28,9 +28,12 @@ handle_message(<<1>>, RawMessage, ClientKey, _Receiver, _ClientRTTable) ->
   ets:insert(protocol_v2_memory, {ClientKey, RawMessage}),
   io:format("Command 1");
 % Command 2 - Read data from internal memory
-handle_message(<<2>>, _RawMessage, _ClientKey, _Receiver, _ClientRTTable) ->
+handle_message(<<2>>, _RawMessage, ClientKey, _Receiver, ClientRTTable) ->
   Commands = get_command(ets:first(protocol_v2_memory)),
-  io:format("Command 2 [~p]", [Commands]);
+  MessageWithoutCommand = utils:generate_message(ClientKey, Commands),
+  Message = << <<0,2,2>>/binary, MessageWithoutCommand/binary >>,
+  io:format("Command 2 [~p]", [Commands]),
+  server_session:handle_direct_message(ClientRTTable, ClientKey, Message);
 handle_message(UnknownCommand, RawMessage, ClientKey, _Receiver, _ClientRTTable) ->
   io:format("Unknown command [~p] in protocol version 2 RealTime message [~p], received from ~p NOT SUPPORTED ~n", [UnknownCommand, RawMessage, ClientKey]).
 

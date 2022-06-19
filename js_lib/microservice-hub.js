@@ -51,7 +51,7 @@ class MicroServiceHUB {
             };
             this.mWebSocketRTObject.onmessage = (evt) => {
                 if ( evt.data instanceof ArrayBuffer ) {
-                    var { version, sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
+                    var { sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
                     this.secretClientKey = Utils.arrayBufferToString(payload);
                 } else {
                     this.secretClientKey = evt.data;
@@ -60,12 +60,12 @@ class MicroServiceHUB {
                 this.mWebSocketRTObject.onmessage = (evt) => {
                     var data = "";
                     if ( evt.data instanceof ArrayBuffer ) {
-                        var { version, sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
+                        var { sender, payload } = Utils.readMicroServiceHUBMessage(evt.data);
                         data = payload;
                     } else {
                         data = evt.data;
                     }
-                    document.dispatchEvent(new CustomEvent('microservicehub.message', { 'detail': { 'version' : version, 'sender' : sender, 'message' : payload }  }));
+                    document.dispatchEvent(new CustomEvent('microservicehub.message', { 'detail': { 'sender' : sender, 'message' : payload }  }));
                 };
             };
             this.mWebSocketRTObject.onerror = (evt) => {
