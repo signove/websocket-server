@@ -59,10 +59,6 @@ class Utils {
         }
         return buf;
     }
-    
-    private readMicroServiceHUBMessageV1() {
-        
-    }
 
     /**
      * Read a MicroService HUB message
@@ -74,18 +70,34 @@ class Utils {
         const RECEIVER_LENGTH = 20;
         const PAYLOAD_POS_OFFSET = 20;
         var senderArray = [];
+        var sender = undefined;
+        var payload = undefined;
+        var senderView = undefined;
 
-        var version = new DataView(buffer, 0, VERSION_LENGTH);
+        var versionView = new DataView(buffer, 0, VERSION_LENGTH);
+        var version = versionView.getUint16(0);
 
-
-  		var senderView = new DataView(buffer, 0, RECEIVER_LENGTH);
-        for (var i=0; i < senderView.byteLength && senderView.getUint8(i) != 0; i++) {
-            senderArray[i] = String.fromCharCode(senderView.getUint8(i));
+        if(version == 1) {
+            senderView = new DataView(buffer, VERSION_LENGTH, RECEIVER_LENGTH);
+            for (var i=0; i < senderView.byteLength && senderView.getUint8(i) != 0; i++) {
+                senderArray[i] = String.fromCharCode(senderView.getUint8(i));
+            }
+            sender = senderArray.join('');
+            payload = buffer.slice(PAYLOAD_POS_OFFSET + VERSION_LENGTH);
+            return { sender, payload };
+        } else if(version == 2) {
+            var commandView = new DataView(buffer, VERSION_LENGTH, 1);
+            senderView = new DataView(buffer, VERSION_LENGTH + 1, RECEIVER_LENGTH);
+            var command = commandView.getUint8(0);
+            for (var i=0; i < senderView.byteLength && senderView.getUint8(i) != 0; i++) {
+                senderArray[i] = String.fromCharCode(senderView.getUint8(i));
+            }
+            sender = senderArray.join('');
+            payload = buffer.slice(PAYLOAD_POS_OFFSET + VERSION_LENGTH + 1);
+            return { command, sender, payload };
+        } else {
+            return { sender, payload };
         }
-  		var sender = senderArray.join('');
-        var payload = buffer.slice(PAYLOAD_POS_OFFSET);
-        
-        return { sender, payload };
     }
 
     /**

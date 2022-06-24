@@ -25,14 +25,15 @@ handle_message(<<0>>, RawMessage, ClientKey, Receiver, ClientRTTable) ->
   end;
 % Command 1 - Write data in internal memory for this client
 handle_message(<<1>>, RawMessage, ClientKey, _Receiver, _ClientRTTable) ->
-  ets:insert(protocol_v2_memory, {ClientKey, RawMessage}),
-  io:format("Command 1");
+  io:format("Command 1 ~n"),
+  ets:insert(protocol_v2_memory, {ClientKey, RawMessage});
 % Command 2 - Read data from internal memory
 handle_message(<<2>>, _RawMessage, ClientKey, _Receiver, ClientRTTable) ->
   Commands = get_command(ets:first(protocol_v2_memory)),
-  MessageWithoutCommand = utils:generate_message(ClientKey, Commands),
+  CommandsAsJson = jsone:encode(Commands),
+  MessageWithoutCommand = utils:generate_message(ClientKey, CommandsAsJson),
   Message = << <<0,2,2>>/binary, MessageWithoutCommand/binary >>,
-  io:format("Command 2 [~p]", [Commands]),
+  io:format("Command 2 [~p] ~n", [Commands]),
   server_session:handle_direct_message(ClientRTTable, ClientKey, Message);
 handle_message(UnknownCommand, RawMessage, ClientKey, _Receiver, _ClientRTTable) ->
   io:format("Unknown command [~p] in protocol version 2 RealTime message [~p], received from ~p NOT SUPPORTED ~n", [UnknownCommand, RawMessage, ClientKey]).
@@ -40,8 +41,8 @@ handle_message(UnknownCommand, RawMessage, ClientKey, _Receiver, _ClientRTTable)
 get_command(ClientKey) ->
   if
     ClientKey == '$end_of_table'->
-      none;
+      [];
     true ->
       Content = ets:lookup(protocol_v2_memory, ClientKey),
-      {[Content|get_command(ets:next(protocol_v2_memory, ClientKey))]}
+      [Content|get_command(ets:next(protocol_v2_memory, ClientKey))]
   end.

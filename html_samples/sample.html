@@ -32,8 +32,14 @@
       }
 
       document.addEventListener("microservicehub.message", function(e) {
-          var message_log = document.getElementById('message_log');
-          message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
+          if(e.detail.command == 0) {
+            var message_log = document.getElementById('message_log');
+            message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
+          } else if(e.detail.command == 2) {
+            var memory_log = document.getElementById('memory_log');
+            memory_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
+          }
+          
       });
 
       function sendMessageButton() {
@@ -141,7 +147,7 @@
       <input type="text" id="memory_write" value=""><label>Memory Write</label>
       <br/><button onclick="writeMemoryButton()">Write memory</button>
       <br/><button onclick="readMemoryButton()">Read memory</button>
-      <br/><textarea id="memory_read"></textarea>
+      <br/><textarea id="memory_log"></textarea>
     </div>
   </body>
 </html>
