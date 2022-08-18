@@ -43,6 +43,6 @@ get_command(ClientKey) ->
     ClientKey == '$end_of_table'->
       [];
     true ->
-      Content = ets:lookup(protocol_v2_memory, ClientKey),
-      [Content|get_command(ets:next(protocol_v2_memory, ClientKey))]
+      Content = ets:lookup_element(protocol_v2_memory, ClientKey, 2),
+      [{ClientKey, Content}|get_command(ets:next(protocol_v2_memory, ClientKey))]
   end.
