@@ -23,6 +23,9 @@ module.exports = function(grunt) {
         options: {
             stderr: false
         },
+        js_copy_arrow: {
+            command: 'mkdir -p rebar/priv/microservicehub/arrow && cp -R ./node_modules/apache-arrow/*.js rebar/priv/microservicehub/arrow'
+        },
 		js_doc: {
 			command: './node_modules/.bin/jsdoc ./js_lib/*.js README.md --recurse --destination ./rebar/priv/microservicehub/doc'
 		},
@@ -60,7 +63,9 @@ module.exports = function(grunt) {
   
     grunt.registerTask('default', ['build']);
     
-    grunt.registerTask('js:build', ['concat', 'uglify', 'js:copy_html', 'js:doc']);
+    grunt.registerTask('js:build', ['concat', 'js:copy_arrow', 'uglify', 'js:copy_html', 'js:doc']);
+
+    grunt.registerTask('js:copy_arrow', ['shell:js_copy_arrow'])
 
     grunt.registerTask('js:doc', ['shell:js_doc']);
 

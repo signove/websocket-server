@@ -32,22 +32,26 @@
       }
 
       document.addEventListener("microservicehub.message", function(e) {
-          var message_log = document.getElementById('message_log');
-          message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
-      });
-
-      document.addEventListener("microservicehub.config.message", function(e) {
-          var message_log = document.getElementById('message_config_log');
-          message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
+          if(e.detail.command == 0) {
+            var message_log = document.getElementById('message_log');
+            message_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
+          } else if(e.detail.command == 2) {
+            var memory_log = document.getElementById('memory_log');
+            memory_log.innerHTML += (e.detail.sender + " - " + Utils.arrayBufferToString(e.detail.message) + "\n");
+          }
+          
       });
 
       function sendMessageButton() {
         var message = document.getElementById('message').value;
         var receiver = document.getElementById('receiver').value;
+
         if(receiver == "") {
           receiver = undefined;
         }
-        m.send(Utils.stringToArrayBuffer(message), receiver)
+
+        message = Utils.createMicroServiceHUBMessageV2(0, Utils.stringToArrayBuffer(document.getElementById('message').value), receiver);
+        m.send(message)
           .then(function() {
               console.log("Message sent!");
           })
@@ -56,13 +60,21 @@
           })
       }
 
-      function sendConfigMessageButton() {
-        var message = document.getElementById('config-general-message').value;
-        if(message == "") {
-          message = document.getElementById('config-message').value;
-        }
-        console.log(message);
-        m.sendConfigMessage(Utils.stringToArrayBuffer(message))
+      function writeMemoryButton() {
+        var memory = Utils.stringToArrayBuffer(document.getElementById('memory_write').value);
+        var message = Utils.createMicroServiceHUBMessageV2(1, memory)
+        m.send(message)
+          .then(function() {
+              console.log("Message sent!");
+          })
+          .catch(function(evt) {
+              alert(evt.message);
+          })
+      }
+
+      function readMemoryButton() {
+        var message = Utils.createMicroServiceHUBMessageV2(2, Utils.stringToArrayBuffer(""));
+        m.send(message)
           .then(function() {
               console.log("Message sent!");
           })
@@ -80,24 +92,6 @@
         if (e.keyCode == 13) {
             sendMessageButton();
         }
-      }
-
-
-      function detectEnterKeyConfig(e) {
-        if (e.keyCode == 13) {
-            sendConfigMessageButton();
-        }
-      }
-
-      function updateOptions(val) {
-        var message = eval(val);
-        m.sendConfigMessage(Utils.stringToArrayBuffer(message))
-          .then(function() {
-              console.log("Config message sent!");
-          })
-          .catch(function(evt) {
-              alert(evt.message);
-          })
       }
 
     </script>
@@ -148,16 +142,12 @@
         <br/><button onclick="sendMessageButton()">Send message</button>
         <br/><textarea id="message_log"></textarea>
       </div>
-      <div>
-        <div></div>
-        <br/>
-        <select id="config-message">
-          <option value="GET_OPTIONS">GET_OPTIONS</option>
-        </select><label>Config message</label>
-        <br/><input type="text" id="config-general-message">
-        <br/><button onclick="sendConfigMessageButton()">Send config</button>
-        <br/><textarea id="message_config_log"></textarea>
-      </div>
+    </div>
+    <div>
+      <input type="text" id="memory_write" value=""><label>Memory Write</label>
+      <br/><button onclick="writeMemoryButton()">Write memory</button>
+      <br/><button onclick="readMemoryButton()">Read memory</button>
+      <br/><textarea id="memory_log"></textarea>
     </div>
   </body>
 </html>

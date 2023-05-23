@@ -16,16 +16,17 @@ Erlang Websocket project to enable real time communication.
 
 * Install NodeJS 10 
 * Install npm
-* Install Gulp `npm install -g gulp@3.9.0`
-* Install Gulp dependencies `npm install`
+* Install Grunt `npm install -g grunt-cli@1.4.3`
+* Install Grunt dependencies `npm install`
 * Install Erlang OTP_24.3.3.3 (http://www.erlang.org/download.html)
 ** I recommend you to use the Erlang Version Manager (https://github.com/robisonsantos/evm). Install these needed dependencies before install Erlang: `apt install libncurses5-dev autoconf gcc make`
 ** Optionally you can install the following packages for Erlang:
 *** OpenSSL `apt install libssl-dev`
 * Install Rebar 3 (http://www.rebar3.org). Use version 3.14.3 at minimum. (There is a copy of this rebar3 version at root project folder)
-* Install Erlang/Rebar dependencies `gulp erlang:deps`
-* Compile and execute the project `gulp run`
-* See available tasks `gulp`
+** You can copy the given `rebar3` file to bin folder `sudo cp rebar3 /usr/local/bin`
+* Install Erlang/Rebar dependencies `grunt erlang:deps`
+* Compile and execute the project `grunt build`
+* See available tasks `grunt`
 
 ### Protocol communication ###
 
